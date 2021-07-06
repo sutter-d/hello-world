@@ -435,6 +435,7 @@ its = its.append(ogswap)
 its = its[ogcaascmplt.columns.tolist()]
 its['shortpo'] = its['PONumber'].str[-10:]
 its.to_csv(csv, index=False)
+its.to_csv("C:/Users/sutter.d/Procter and Gamble/Project Governance - GEM (ESM) File/CombCaaSESM.update.csv", index=False)
 
 ogcaaswwt['shortpo'] = ogcaaswwt['PONumber'].str[-10:]
 csv = edr + "CaaS.WWT/WWT.Comb.ESM.update." + time.strftime("%Y%m%d-%H%M%S") + ".xlsx"
