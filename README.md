@@ -1,6 +1,6 @@
 # hello-world
 My name is Daniel Sutter
-| I work in IT and I'm a fair golfer =)
+| I work in IT and I golf
 
 Skills and Certs
 | Network: CCNA, CCENT
@@ -13,4 +13,4 @@ Education
 | MS – Supply Chain Management, PSU 2017
 | BS – Industrial Engineering, UW-Madison 2010 
 
-Current Role - Senior IT Manager – Materials Management and Process Improvement @ P&G
+Current Role - Ops @ Oxide Computer
