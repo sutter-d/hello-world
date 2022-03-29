@@ -1,6 +1,6 @@
 # hello-world
-My name is Daniel Sutter
-| I work in IT and I golf
+Daniel Sutter
+| I work in IT, dabble in beer, and golf
 
 Skills and Certs
 | Network: CCNA, CCENT
