@@ -1,0 +1,375 @@
+Traceback (most recent call last):
+  File "/Users/danielsutter/Documents/oxide/scripts/cpnbomexport.py", line 24, in <module>
+    logging.basicConfig(filename=('./restapi.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
+  File "/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/logging/__init__.py", line 1984, in basicConfig
+    h = FileHandler(filename, mode)
+  File "/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/logging/__init__.py", line 1143, in __init__
+    StreamHandler.__init__(self, self._open())
+  File "/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/logging/__init__.py", line 1172, in _open
+    return open(self.baseFilename, self.mode, encoding=self.encoding)
+OSError: [Errno 30] Read-only file system: '/restapi.log'
+/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/site-packages/openpyxl/styles/stylesheet.py:221: UserWarning: Workbook contains no default style, apply openpyxl's default
+  warn("Workbook contains no default style, apply openpyxl's default")
+shell-init: error retrieving current directory: getcwd: cannot access parent directories: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/openordermv: Operation not permitted
+shell-init: error retrieving current directory: getcwd: cannot access parent directories: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/openordermv: Operation not permitted
+shell-init: error retrieving current directory: getcwd: cannot access parent directories: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/openordermv: Operation not permitted
+shell-init: error retrieving current directory: getcwd: cannot access parent directories: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/openordermv: Operation not permitted
+shell-init: error retrieving current directory: getcwd: cannot access parent directories: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/openordermv: Operation not permitted
+shell-init: error retrieving current directory: getcwd: cannot access parent directories: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/openordermv: Operation not permitted
+shell-init: error retrieving current directory: getcwd: cannot access parent directories: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/openordermv: Operation not permitted
+shell-init: error retrieving current directory: getcwd: cannot access parent directories: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/openordermv: Operation not permitted
+shell-init: error retrieving current directory: getcwd: cannot access parent directories: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/openordermv: Operation not permitted
+shell-init: error retrieving current directory: getcwd: cannot access parent directories: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/openordermv: Operation not permitted
+shell-init: error retrieving current directory: getcwd: cannot access parent directories: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/openordermv: Operation not permitted
+shell-init: error retrieving current directory: getcwd: cannot access parent directories: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/openordermv: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/openordermv: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/openordermv: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/openordermv: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/openordermv: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/openordermv: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/openordermv: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/openordermv: Operation not permitted
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv: No such file or directory
+bash: ~/Desktop/openordermv.sh: No such file or directory
+bash: /Users/danielsutter/Desktop/openordermv.sh: Operation not permitted
+bash: /Users/danielsutter/Desktop/openordermv.sh: Operation not permitted
+bash: /Users/danielsutter/Desktop/openordermv.sh: Operation not permitted
+bash: /Users/danielsutter/Desktop/dailyrun.sh: Operation not permitted
+bash: /Users/danielsutter/Desktop/dailyrun.sh: Operation not permitted
+bash: /Users/danielsutter/Desktop/dailyrun.sh: Operation not permitted
+bash: /Users/danielsutter/Desktop/dailyrun.sh: Operation not permitted
+/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/site-packages/openpyxl/styles/stylesheet.py:221: UserWarning: Workbook contains no default style, apply openpyxl's default
+  warn("Workbook contains no default style, apply openpyxl's default")
+The file /Users/danielsutter/Desktop/open does not exist.
+The file /Users/danielsutter/Desktop/open does not exist.
+bash: /Users/danielsutter/Desktop/dailyrun.sh: Operation not permitted
+bash: /Users/danielsutter/Desktop/dailyrun.sh: Operation not permitted
+/bin/bash: /Users/danielsutter/Desktop/dailyrun.bash: Operation not permitted
+Traceback (most recent call last):
+  File "/Users/danielsutter/Documents/oxide/scripts/local_weekly_backup.py", line 45, in <module>
+    shutil.copytree(src_dir, dest_dir)
+  File "/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/shutil.py", line 557, in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+  File "/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/shutil.py", line 458, in _copytree
+    os.makedirs(dst, exist_ok=dirs_exist_ok)
+  File "/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/os.py", line 223, in makedirs
+    mkdir(name, mode)
+FileExistsError: [Errno 17] File exists: '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-25'
+Traceback (most recent call last):
+  File "/Users/danielsutter/Documents/oxide/scripts/local_weekly_backup.py", line 45, in <module>
+    shutil.copytree(src_dir, dest_dir)
+  File "/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/shutil.py", line 557, in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+  File "/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/shutil.py", line 513, in _copytree
+    raise Error(errors)
+shutil.Error: [('/Users/danielsutter/Documents/oxide/scripts/23741457results.rtf', '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-25/23741457results.rtf', "[Errno 22] Invalid argument: '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-25/23741457results.rtf'"), ('/Users/danielsutter/Documents/oxide/scripts/archive/gitpush', '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-25/archive/gitpush', "[Errno 22] Invalid argument: '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-25/archive/gitpush'"), ('/Users/danielsutter/Documents/oxide/scripts/creds.yml', '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-25/creds.yml', "[Errno 22] Invalid argument: '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-25/creds.yml'"), ('/Users/danielsutter/Documents/oxide/scripts/credentials.json', '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-25/credentials.json', "[Errno 22] Invalid argument: '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-25/credentials.json'"), ('/Users/danielsutter/Documents/oxide/scripts/dailyrun.bash', '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-25/dailyrun.bash', "[Errno 22] Invalid argument: '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-25/dailyrun.bash'")]
+Traceback (most recent call last):
+  File "/Users/danielsutter/Documents/oxide/scripts/local_weekly_backup.py", line 45, in <module>
+    shutil.copytree(src_dir, dest_dir)
+  File "/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/shutil.py", line 557, in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+  File "/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/shutil.py", line 513, in _copytree
+    raise Error(errors)
+shutil.Error: [('/Users/danielsutter/Documents/oxide/scripts/23741457results.rtf', '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/23741457results.rtf', "[Errno 22] Invalid argument: '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/23741457results.rtf'"), ('/Users/danielsutter/Documents/oxide/scripts/archive/gitpush', '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/archive/gitpush', "[Errno 22] Invalid argument: '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/archive/gitpush'"), ('/Users/danielsutter/Documents/oxide/scripts/creds.yml', '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/creds.yml', "[Errno 22] Invalid argument: '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/creds.yml'"), ('/Users/danielsutter/Documents/oxide/scripts/credentials.json', '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/credentials.json', "[Errno 22] Invalid argument: '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/credentials.json'"), ('/Users/danielsutter/Documents/oxide/scripts/dailyrun.bash', '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/dailyrun.bash', "[Errno 22] Invalid argument: '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/dailyrun.bash'")]
+Traceback (most recent call last):
+  File "/Users/danielsutter/Documents/oxide/scripts/local_weekly_backup.py", line 45, in <module>
+    shutil.copytree(src_dir, dest_dir)
+  File "/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/shutil.py", line 557, in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+  File "/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/shutil.py", line 513, in _copytree
+    raise Error(errors)
+shutil.Error: [('/Users/danielsutter/Documents/oxide/scripts/23741457results.rtf', '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/23741457results.rtf', "[Errno 22] Invalid argument: '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/23741457results.rtf'"), ('/Users/danielsutter/Documents/oxide/scripts/archive/gitpush', '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/archive/gitpush', "[Errno 22] Invalid argument: '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/archive/gitpush'"), ('/Users/danielsutter/Documents/oxide/scripts/creds.yml', '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/creds.yml', "[Errno 22] Invalid argument: '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/creds.yml'"), ('/Users/danielsutter/Documents/oxide/scripts/credentials.json', '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/credentials.json', "[Errno 22] Invalid argument: '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/credentials.json'"), ('/Users/danielsutter/Documents/oxide/scripts/dailyrun.bash', '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/dailyrun.bash', "[Errno 22] Invalid argument: '/Volumes/GoogleDrive/My Drive/scripts/backup2022-03-29/dailyrun.bash'")]

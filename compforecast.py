@@ -21,22 +21,6 @@ import requests
 import restapi as oxrest
 import openorders as oxopn
 
-# requests.packages.urllib3.disable_warnings()
-# with open("./config.yml", 'r') as stream:
-#     opsconfigs = yaml.safe_load(stream)
-# logconfigs = opsconfigs['logging_configs']
-# loglvl = logconfigs['level']
-# logging.basicConfig(filename=('/Volumes/GoogleDrive/Shared drives/Docs/Operations/OpsAutomation/logs/test/compforecast' + time.strftime("%Y-%m-%d") + '.log'),
-#                     level=loglvl,
-#                     format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
-
-# st = dt.datetime.now()
-
-# with open("./creds.yml", 'r') as stream:
-#     allcreds = yaml.safe_load(stream)
-# durocreds = allcreds['oxide_duro']
-
-# histup = '/Volumes/GoogleDrive/Shared drives/Docs/Operations/OpsAutomation/HistUpdates/'
 
 """
 # =============================================================================

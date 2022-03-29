@@ -1,0 +1,6 @@
+logging_configs:
+    # level: 10 #Debug
+    level: 20 #Info
+    # level: 30 #Warning
+    # level: 40 #Error
+    # level: 50 #Critical

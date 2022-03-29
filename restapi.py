@@ -727,6 +727,15 @@ def buildbom(oxpn, oxcreds):
 
 
 def cpn():
+    """
+    Provides the raw Duro output for an all CPN query for use in other scripts
+
+    Returns
+    -------
+    cpnbom : dataframe
+        raw Duro output from an all CPN query.
+
+    """
     # Opening creds.yml and assigning Duro creds
     with open("./creds.yml", 'r') as stream:
         allcreds = yaml.safe_load(stream)
