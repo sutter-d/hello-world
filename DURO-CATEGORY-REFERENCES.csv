@@ -1,0 +1,120 @@
+Category,Value
+-- MECHANICAL --,Adhesive
+-- MECHANICAL --,Bearing
+-- MECHANICAL --,Belt
+-- MECHANICAL --,Bolt
+-- MECHANICAL --,Clamp
+-- MECHANICAL --,Conduit
+-- MECHANICAL --,Consumable
+-- MECHANICAL --,Cylinder
+-- MECHANICAL --,Damper
+-- MECHANICAL --,Dowel
+-- MECHANICAL --,Enclosure
+-- MECHANICAL --,Fabricated Carbon Fiber
+-- MECHANICAL --,Fabricated Metal
+-- MECHANICAL --,Fabricated Other
+-- MECHANICAL --,Fabricated Plastic
+-- MECHANICAL --,Fan
+-- MECHANICAL --,Fastener
+-- MECHANICAL --,Fitting
+-- MECHANICAL --,Fixture
+-- MECHANICAL --,Foam
+-- MECHANICAL --,Gasket
+-- MECHANICAL --,Heatsink
+-- MECHANICAL --,Insert
+-- MECHANICAL --,Label
+-- MECHANICAL --,Magnet
+-- MECHANICAL --,Miscellaneous Mechanical
+-- MECHANICAL --,Motor
+-- MECHANICAL --,Nozzle
+-- MECHANICAL --,Nut
+-- MECHANICAL --,O-Ring
+-- MECHANICAL --,Optic
+-- MECHANICAL --,Packaging
+-- MECHANICAL --,Paint
+-- MECHANICAL --,Pin
+-- MECHANICAL --,Pulley
+-- MECHANICAL --,Retaining Ring
+-- MECHANICAL --,Rivet
+-- MECHANICAL --,Screw
+-- MECHANICAL --,Sheet Metal
+-- MECHANICAL --,Shim
+-- MECHANICAL --,Solenoid
+-- MECHANICAL --,Spacer
+-- MECHANICAL --,Spring
+-- MECHANICAL --,Standoff
+-- MECHANICAL --,Thermal Management
+-- MECHANICAL --,Tool
+-- MECHANICAL --,Tubing
+-- MECHANICAL --,Valve
+-- MECHANICAL --,Washer
+-- ELECTRICAL --,Audio
+-- ELECTRICAL --,Battery
+-- ELECTRICAL --,Capacitor
+-- ELECTRICAL --,Charger
+-- ELECTRICAL --,Choke
+-- ELECTRICAL --,Circuit Breaker
+-- ELECTRICAL --,Connector
+-- ELECTRICAL --,Crystal
+-- ELECTRICAL --,Diode
+-- ELECTRICAL --,Filter
+-- ELECTRICAL --,Fuse
+-- ELECTRICAL --,IC
+-- ELECTRICAL --,Inductor
+-- ELECTRICAL --,Isolator
+-- ELECTRICAL --,Jumper
+-- ELECTRICAL --,LED
+-- ELECTRICAL --,Memory
+-- ELECTRICAL --,Miscellaneous Electrical
+-- ELECTRICAL --,Op Amp
+-- ELECTRICAL --,Oscillator
+-- ELECTRICAL --,Potentiometer
+-- ELECTRICAL --,Power Supply
+-- ELECTRICAL --,Printed Circuit Board
+-- ELECTRICAL --,Relay
+-- ELECTRICAL --,Resistor
+-- ELECTRICAL --,RF
+-- ELECTRICAL --,Sensor
+-- ELECTRICAL --,Speaker
+-- ELECTRICAL --,Surge Suppression
+-- ELECTRICAL --,Switch
+-- ELECTRICAL --,Terminal Block
+-- ELECTRICAL --,Transducer
+-- ELECTRICAL --,Transformer
+-- ELECTRICAL --,Transistor
+-- ELECTRICAL --,Wire
+-- ASSEMBLY --,Battery Pack
+-- ASSEMBLY --,Cable Assembly
+-- ASSEMBLY --,EBOM
+-- ASSEMBLY --,MBOM
+-- ASSEMBLY --,Packaging Assembly
+-- ASSEMBLY --,Printed Circuit Board Assembly
+-- ASSEMBLY --,Spare Kit
+-- ASSEMBLY --,Sub Assembly
+-- ASSEMBLY --,Test System
+-- ASSEMBLY --,Tool Kit
+-- ASSEMBLY --,Top Level Assembly
+-- SOFTWARE --,CAM
+-- SOFTWARE --,Firmware
+-- SOFTWARE --,Object Code
+-- SOFTWARE --,Source Code
+-- DOCUMENT --,Artwork
+-- DOCUMENT --,Assembly Drawing
+-- DOCUMENT --,Board File
+-- DOCUMENT --,CAD
+-- DOCUMENT --,Certification
+-- DOCUMENT --,Datasheet
+-- DOCUMENT --,Dimensions Drawing
+-- DOCUMENT --,Drawing
+-- DOCUMENT --,Fab Drawing
+-- DOCUMENT --,Form
+-- DOCUMENT --,Gerber
+-- DOCUMENT --,Instructions
+-- DOCUMENT --,Procedure
+-- DOCUMENT --,Product Literature
+-- DOCUMENT --,Quote
+-- DOCUMENT --,Schematic
+-- DOCUMENT --,Specification
+-- DOCUMENT --,STEP
+-- DOCUMENT --,Test Plan
+-- DOCUMENT --,Test Report
