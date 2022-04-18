@@ -18,6 +18,7 @@ import yaml
 import pandas as pd
 # from pyairtable import Table
 import requests
+from pyfiglet import Figlet
 
 import restapi as oxrest
 # import openorders as oxopn
@@ -30,6 +31,7 @@ loglvl = logconfigs['level']
 logging.basicConfig(filename=('/Volumes/GoogleDrive/Shared drives/Docs/Operations/OpsAutomation/logs/test/cpn_qty_print2desktop_' + time.strftime("%Y-%m-%d") + '.log'),
                     level=loglvl,
                     format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
+fascii = Figlet(font='slant')
 
 # Opening creds.yml and assigning Duro creds
 with open("./creds.yml", 'r') as cr_stream:
@@ -134,6 +136,6 @@ dsktp = '~/Desktop/'
 csv = dsktp + 'cpnqty.' + duropn + "." + \
     time.strftime("%Y%m%d-%H%M%S") + '.csv'
 cpnqty.to_csv(csv, index=False)
-
+print(fascii.renderText("ops cli "+str(duropn)))
 
 logging.debug("FINISH WRITING TO DESKTOP")

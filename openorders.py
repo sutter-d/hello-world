@@ -360,6 +360,7 @@ if __name__ == '__main__':
 
     # Write each dataframe to a different worksheet.
     opnord.to_excel(
-        writer, sheet_name='Open_Orders')
-    
+        writer, sheet_name='Open_Orders', index=False)
+    writer.save()
+
     logging.info("FINISH openorders.py __main__ HERE")

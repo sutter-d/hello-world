@@ -35,14 +35,14 @@ oxide_arrow:
   stat_api_uname: procurement@oxidecomputer.com
   stat_api_url: https://www.arrow.com/services-cc/automatedCheckout/checkOrderStatus
 oxide_digikey:
-  access_token: 3sP1HENkJ1nOgvGnoAAfuTotUWAR
+  access_token: d049pM8opKpcMBf8F3vKVPCTd5f5
   auth_url: https://api.digikey.com/v1/oauth2/authorize
   callback_url: https://localhost
   client_id: lpX1b3H9uDleWDFp8TSxVa9VMJPGopv7
   client_secret: ttQGRFXRbdrTExth
   cust_id: 13447955
   hist_api_url: https://api.digikey.com/OrderDetails/v3/History
-  refresh_token: SjCg1OGyilCbNxu6eAcuLEtHHSlrP7pZ
+  refresh_token: WfZDqUNAWxEVi3CXAfHPgiDZg4Xf9Cfw
   stat_api_url: https://api.digikey.com/OrderDetails/v3/Status/
   token_url: https://api.digikey.com/v1/oauth2/token
 oxide_digikey_test:

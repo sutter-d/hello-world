@@ -58,17 +58,17 @@ logging.info("FINISH RUNNING COMPONENT FORECAST MAIN() FUNCTION")
 stdcost = stdcost.main()
 
 # TRIM COMP FORECAST AND REMOVE PROCUREMENT DATA FOCUSED ON TOTALS AND NOT STANDARD COST
-abc = comps_forecast_mpn_proc.loc[:,'cpn':'forecastTotal']
+abc = comps_forecast_mpn_proc.loc[:,'cpn':'forecast_total']
 
 # MERGE WITH STDCOST DATA
 abc_stdcost = abc.merge(stdcost, 'left', 'cpn')
 
 # USING STD COST DATA, CALCULATE INVENTORY VALUE
 abc_stdcost['mpn'] = abc_stdcost['mpn'].fillna('---')
-abc_stdcost['proc mpn'] = abc_stdcost['proc mpn'].fillna('---')
+abc_stdcost['proc_mpn'] = abc_stdcost['proc_mpn'].fillna('---')
 abc_stdcost = abc_stdcost.fillna(0)
-abc_stdcost['invValue'] = abc_stdcost['TotalQty'] * abc_stdcost['Std Cost']
-abc_stdcost = abc_stdcost.sort_values(by=['invValue'], ascending=False)
+abc_stdcost['inv_value'] = abc_stdcost['total_qty'] * abc_stdcost['std_cost']
+abc_stdcost = abc_stdcost.sort_values(by=['inv_value'], ascending=False)
 
 # USE SRCS (OCTOPART SOURCING DATA) TO GENERATE AND AVERAGE LT PER CPN
 abcsrcs = srcs[srcs['value']!=0]
@@ -80,27 +80,27 @@ cat = pd.read_csv("./DURO-CATEGORY-REFERENCES.csv")
 abc_stdcost_lt_cat = abc_stdcost_lt.merge(cat, 'left', left_on='category', right_on='Value')
 
 # CALCULATE INV SUM AND INVENTORY CUMULATIVE SUM
-sm = abc_stdcost_lt_cat['invValue'].sum()
-cs = abc_stdcost_lt_cat['invValue'].cumsum()
+sm = abc_stdcost_lt_cat['inv_value'].sum()
+cs = abc_stdcost_lt_cat['inv_value'].cumsum()
 cs = pd.DataFrame(cs)
-cs = cs.rename(columns={'invValue':'cumsum'})
+cs = cs.rename(columns={'inv_value':'cum_sum'})
 
 # JOIN CUMULATIVE SUM AND CREATE ABC INV INDICATOR
 abc_stdcost_lt_cat_cumsum = pd.concat([abc_stdcost_lt_cat, cs], axis=1)
-abc_stdcost_lt_cat_cumsum['abcInv'] = 1
+abc_stdcost_lt_cat_cumsum['abc_inv'] = 1
 # CUMULATIVE TOP 80% SET TO 9, 80% TO 90% SET TO 4, 90% AND ABOVE STAY AT 1
-abc_stdcost_lt_cat_cumsum['abcInv'].loc[(abc_stdcost_lt_cat_cumsum['cumsum']<(sm*.9))]=4
-abc_stdcost_lt_cat_cumsum['abcInv'].loc[(abc_stdcost_lt_cat_cumsum['cumsum']<(sm*.8))]=9
+abc_stdcost_lt_cat_cumsum['abc_inv'].loc[(abc_stdcost_lt_cat_cumsum['cum_sum']<(sm*.9))]=4
+abc_stdcost_lt_cat_cumsum['abc_inv'].loc[(abc_stdcost_lt_cat_cumsum['cum_sum']<(sm*.8))]=9
 
 # CREATE ABC LT INDICATOR
 abc_stdcost_lt_cat_cumsum['value'] = abc_stdcost_lt_cat_cumsum['value'].fillna(0)
-abc_stdcost_lt_cat_cumsum['abcLT'] = 1
+abc_stdcost_lt_cat_cumsum['abc_lt'] = 1
 # LT>26 WEEKS SET TO 9, LT>13 WEEKS SET TO 4, LT<13 WEEKS STAY AT 1
-abc_stdcost_lt_cat_cumsum['abcLT'].loc[(abc_stdcost_lt_cat_cumsum['value']>(13*7))]=4
-abc_stdcost_lt_cat_cumsum['abcLT'].loc[(abc_stdcost_lt_cat_cumsum['value']>(26*7))]=9
-abc_stdcost_lt_cat_cumsum['RPN'] = abc_stdcost_lt_cat_cumsum['abcInv']*abc_stdcost_lt_cat_cumsum['abcLT']
-abc_stdcost_lt_cat_cumsum = abc_stdcost_lt_cat_cumsum.rename(columns={'value':'ltValue',
-                                                                'Category':'bigcat'})
+abc_stdcost_lt_cat_cumsum['abc_lt'].loc[(abc_stdcost_lt_cat_cumsum['value']>(13*7))]=4
+abc_stdcost_lt_cat_cumsum['abc_lt'].loc[(abc_stdcost_lt_cat_cumsum['value']>(26*7))]=9
+abc_stdcost_lt_cat_cumsum['RPN'] = abc_stdcost_lt_cat_cumsum['abc_inv']*abc_stdcost_lt_cat_cumsum['abc_lt']
+abc_stdcost_lt_cat_cumsum = abc_stdcost_lt_cat_cumsum.rename(columns={'value':'lt_value',
+                                                                'Category':'big_cat'})
 abc_stdcost_lt_cat_cumsum = abc_stdcost_lt_cat_cumsum.sort_values(by=['RPN'],ascending=False)
 # TRIM MANF FOR MANF NAME AND CPN AND JOIN
 tmanf = manf[['cpn', 'manf_name']].drop_duplicates()
@@ -110,14 +110,14 @@ abc_stdcost_lt_cat_cumsum = abc_stdcost_lt_cat_cumsum.merge(tmanf, 'left', 'cpn'
 cols_to_move = ['cpn',
                 'manf_name',
                 'name',
-                'bigcat',
+                'big_cat',
                 'category',
-                'Std Cost',
-                'invValue',
-                'ltValue',
-                'cumsum',
-                'abcInv',
-                'abcLT',
+                'std_cost',
+                'inv_value',
+                'lt_value',
+                'cum_sum',
+                'abc_inv',
+                'abc_lt',
                 'RPN']
 
 cols = cols_to_move + [col for col in abc.columns if col not in cols_to_move]
@@ -126,4 +126,9 @@ hash1 = pd.util.hash_pandas_object(abc).sum()
 logging.debug("abc hash value = "+str(hash1))
 print(hash1)
 # In[]
-abc_stdcost_lt_cat_cumsum.to_excel('/Volumes/GoogleDrive/Shared drives/Docs/Operations/OpsAutomation/Reports/abc' + time.strftime("%Y-%m-%d-%H%M%S") + '.xlsx', index=False)
+reports = '/Volumes/GoogleDrive/Shared drives/Docs/Operations/OpsAutomation/Reports/'
+histup = '/Volumes/GoogleDrive/Shared drives/Docs/Operations/OpsAutomation/HistUpdates/'
+csv = histup + 'ABC_Analysis_' + \
+    time.strftime("%Y-%m-%d-%H%M%S") + '.xlsx'
+
+abc_stdcost_lt_cat_cumsum.to_excel(csv, index=False)

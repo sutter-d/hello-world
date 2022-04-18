@@ -147,7 +147,7 @@ def main():
         allcreds = yaml.safe_load(stream)
     durocreds = allcreds['oxide_duro']
     
-    histup = '/Volumes/GoogleDrive/Shared drives/Docs/Operations/OpsAutomation/HistUpdates/'
+    histup = './data/'
 
     # In[FORECAST DATA PULLED FROM GDRIVE]
     """
@@ -156,7 +156,8 @@ def main():
 
     logging.info("START FORECAST DATA PULLED FROM GDRIVE")
 
-    forecast_gdrive = '/Volumes/GoogleDrive/Shared drives/Docs/Operations/Production Forecast/Oxide Production Forecast.xlsx'
+    # forecast_gdrive = '/Volumes/GoogleDrive/Shared drives/Docs/Operations/Production Forecast/Oxide Production Forecast.xlsx'
+    forecast_gdrive = './data/prod_forecast.xlsx'
     forecast_get = pd.read_excel(
         forecast_gdrive, sheet_name='Production Forecast', header=0)
     forecast_get = forecast_get.loc[:, 'CPN':'Qty']
@@ -255,7 +256,8 @@ def main():
     # WITHOUT A UNIT COST SO THEY WON'T IMPACT THE STANDARD COST WHEN AVERAGED
     logging.info("START PULLING PROCUREMENT TRACKER FROM GDRIVE")
 
-    proc_gdrive = '/Volumes/GoogleDrive/Shared drives/Oxide Benchmark Shared/Benchmark Procurement/On Hand Inventory/Oxide Inv Receipts and Inv Tracker at Benchmark (Rochester).xlsx'
+    # proc_gdrive = '/Volumes/GoogleDrive/Shared drives/Oxide Benchmark Shared/Benchmark Procurement/On Hand Inventory/Oxide Inv Receipts and Inv Tracker at Benchmark (Rochester).xlsx'
+    proc_gdrive = './data/ox_bm_inv_shared.xlsx'
     proc_get = pd.read_excel(proc_gdrive,
                              sheet_name='Oxide Inventory Receipts',
                              header=0)
@@ -381,7 +383,7 @@ def main():
     durobom_forecast_mpn_proc = durobom_forecast.merge(mpn_proc,
                                                        'left',
                                                        'cpn')
-    reports = '/Volumes/GoogleDrive/Shared drives/Docs/Operations/OpsAutomation/Reports/'
+    reports = './data/'
     csv = histup + 'durobom_forecast_mpn_proc' + \
         time.strftime("%Y-%m-%d-%H%M%S") + '.xlsx'
     durobom_forecast_mpn_proc.to_excel(csv, index=False)
@@ -533,10 +535,16 @@ def main():
     mech_comps_forecast_mpn_proc = comps_forecast_mpn_proc[~comps_forecast_mpn_proc['category'].isin(
         elec['Value'])]
 
+    old_cf = './data/old_comp_forecast.xlsx'
+    old_cf_get = pd.read_excel(old_cf,
+                             sheet_name='Elec.Component.Analysis',
+                             header=0)
+    old_cf = old_cf_get[['cpn', 'Notes']]
+    elec_comps_forecast_mpn_proc = elec_comps_forecast_mpn_proc.merge(old_cf, 'left', 'cpn')
+
     # In[CREATE AND NAME XLS MULTI-WORKSHEET FILE]
     # CREATE AND NAME XLS MULTI-WORKSHEET FILE
-    csv = histup + 'Component_Forecast_Analysis_' + \
-        time.strftime("%Y-%m-%d-%H%M%S") + '.xlsx'
+    csv = reports + 'Component_Forecast_Analysis.xlsx'
     writer = pd.ExcelWriter(csv, engine='xlsxwriter')
 
     # Write each dataframe to a different worksheet.
@@ -589,7 +597,7 @@ if __name__ == '__main__':
         opsconfigs = yaml.safe_load(stream)
     logconfigs = opsconfigs['logging_configs']
     loglvl = logconfigs['level']
-    logging.basicConfig(filename=('/Volumes/GoogleDrive/Shared drives/Docs/Operations/OpsAutomation/logs/test/compforecast' + time.strftime("%Y-%m-%d") + '.log'),
+    logging.basicConfig(filename=('./gitlogs/compforecast' + time.strftime("%Y-%m-%d") + '.log'),
                         level=loglvl,
                         format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
     # logger = logging.getLogger(__name__)

@@ -34,10 +34,10 @@ logging.basicConfig(filename=('/Volumes/GoogleDrive/My Drive/logs/local_daily_' 
 logging.info("START dailyrun.py __main__ HERE")
 
 cont = webbrowser.get('Safari')
-cont.open_new('http://google.com')
-cont.open_new('https://reserveohio.com/OhioCampWeb/Facilities/SearchViewUnitAvailabity.aspx')
-cont.open_new('https://www.cars.com/shopping/results/?dealer_id=&keyword=&list_price_max=&list_price_min=&makes[]=volvo&maximum_distance=500&mileage_max=&models[]=volvo-s60_recharge_plug_in_hybrid&models[]=volvo-xc60_recharge_plug_in_hybrid&page_size=20&sort=distance&stock_type=new&year_max=&year_min=&zip=45208')
-cont.open_new('https://www.cars.com/shopping/results/?dealer_id=&keyword=&list_price_max=&list_price_min=&makes[]=jeep&maximum_distance=500&mileage_max=&models[]=jeep-grand_cherokee_4xe&page_size=20&sort=distance&stock_type=new&year_max=&year_min=&zip=45208')
+# cont.open_new('http://google.com')
+# cont.open_new('https://reserveohio.com/OhioCampWeb/Facilities/SearchViewUnitAvailabity.aspx')
+# cont.open_new('https://www.cars.com/shopping/results/?dealer_id=&keyword=&list_price_max=&list_price_min=&makes[]=volvo&maximum_distance=500&mileage_max=&models[]=volvo-s60_recharge_plug_in_hybrid&models[]=volvo-xc60_recharge_plug_in_hybrid&page_size=20&sort=distance&stock_type=new&year_max=&year_min=&zip=45208')
+# cont.open_new('https://www.cars.com/shopping/results/?dealer_id=&keyword=&list_price_max=&list_price_min=&makes[]=jeep&maximum_distance=500&mileage_max=&models[]=jeep-grand_cherokee_4xe&page_size=20&sort=distance&stock_type=new&year_max=&year_min=&zip=45208')
 logging.info("webpages opened")
 
 logging.info("FINISH dailyrun.py __main__ HERE")

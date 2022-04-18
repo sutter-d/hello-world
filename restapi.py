@@ -33,14 +33,6 @@ def unpack(oxjs):
     df = pd.DataFrame()
     js = oxjs.dropna()
     if all(isinstance(i, list) for i in js):
-        # =============================================================================
-        #         # Uncomment this block to return to previous returns
-        #         if len(js)>1:
-        #             for x in js:
-        #                 df = df.append(pd.DataFrame(x))
-        #         elif len(js) == 1:
-        #             df = pd.DataFrame(js.to_dict())
-        # =============================================================================
         for index, value in js.items():
             temp = pd.DataFrame(value)
             temp['ind'] = index

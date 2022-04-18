@@ -6,24 +6,22 @@ Created on Thu Feb 17 11:37:15 2022
 @author: danielsutter
 """
 
-
-import requests
-import pandas as pd
-import yaml
 import logging
-import restapi as oxrest
-import cpnmpnexport
-import math
-# from requests import HTTPError
-# import json
+# import math
 import time
-from pyairtable import Api, Base, Table
-
-# import base64
 # import datetime as dt
+# import base64
 
-requests.packages.urllib3.disable_warnings()
-logging.basicConfig(filename=('./restapi.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
+# import json
+import yaml
+import pandas as pd
+# from pyairtable import Table
+import requests
+
+import restapi as oxrest
+# import openorders as oxopn
+import cpn_mpn_export as cme
+
 
 def main():
     """
@@ -40,8 +38,8 @@ def main():
     """
     CALLING MAIN() FROM cpnmpnexport.py
     """
-    cpns = cpnmpnexport.cpn()
-    cpnbom_mpn = cpnmpnexport.cpnmpn(cpns)
+    cpns = oxrest.cpn()
+    cpnbom_mpn = cme.cpnmpn(cpns)
     
     # In[PULLING PROCUREMENT TRACKER FROM GDRIVE]
     """
@@ -103,4 +101,23 @@ def main():
     return mpn_proc
 
 if __name__ == '__main__':
+    requests.packages.urllib3.disable_warnings()
+    with open("./config.yml", 'r') as stream:
+        opsconfigs = yaml.safe_load(stream)
+    logconfigs = opsconfigs['logging_configs']
+    loglvl = logconfigs['level']
+    # logging.basicConfig(filename=('/Volumes/GoogleDrive/Shared drives/Docs/Operations/OpsAutomation/logs/test/stdcost' + time.strftime("%Y-%m-%d") + '.log'),
+    #                     level=loglvl,
+    #                     format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
+    logger = logging.getLogger(__name__)
+    logger.setLevel(10)
+    formatter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s | %(message)s')
+    file_handler = logging.FileHandler('/Volumes/GoogleDrive/Shared drives/Docs/Operations/OpsAutomation/logs/test/stdcost' + time.strftime("%Y-%m-%d") + '.log')
+    # file_handler = logging.FileHandler('/Volumes/GoogleDrive/Shared drives/Docs/Operations/OpsAutomation/logs/test/stdcost.log')
+    file_handler.setFormatter(formatter)
+    # file_handler.setLevel(loglvl)
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    # logger.addHandler(stream_handler)
     mpn_proc = main()
