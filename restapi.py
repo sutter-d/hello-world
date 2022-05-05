@@ -772,3 +772,254 @@ def cpn():
         temp = unpack(temp['components'])
         cpnbom = cpnbom.append(temp)
     return cpnbom
+
+# In[S2S BUILD BOM FUNCTION]
+"""
+BUILD S2S BOM FUNCTION
+"""
+
+
+def s2sbuildbom(oxpn, oxcreds):
+    # [DURO RACK API GET]
+    # oxpn = '991-0000024'
+    # oxpn = '999-0000014'  # oxpnE RACK PN
+    # sandbox_api_url = 'https://public-api.staging-gcp.durolabs.xyz/v1/products/'
+    prod_api_url = 'https://public-api.duro.app/v1/products/'
+    comp_api_url = 'https://public-api.duro.app/v1/components/'
+    api_key = oxcreds  # 16152961423738m50/MAHXgvcvj4RMROq2g==
+
+    # creates headers for the GET query
+    api_call_headers = {'x-api-key': api_key}
+    api_call_params = {'cpn': oxpn}
+
+    # GET REQUEST
+    # IF PN BEGINS WITH 999 THEN PROD ELSE COMPONENT
+    if oxpn[0:3] == '999':
+        api_call_response = requests.get(
+            prod_api_url, headers=api_call_headers, params=api_call_params, verify=False)
+    else:
+        api_call_response = requests.get(
+            comp_api_url, headers=api_call_headers, params=api_call_params, verify=False)
+    duro = pd.DataFrame(api_call_response.json())
+
+    # [UNPACKING FOR CHILD COMPONENTS]
+
+    duro['parent'] = oxpn
+    duro = duro.set_index('parent')
+    x = 0
+    duro
+    if oxpn[0:3] == '999':
+        durop = unpack(duro['products'])
+    else:
+        durop = unpack(duro['components'])
+    durop['parent'] = durop['cpn']
+    durop['level'] = x
+
+    # [DURO API GET FOR LEVEL 1 COMPONENTS]
+    rent = durop.at[0, 'parent']
+
+    cpns = cpn().drop(columns=['value'])
+
+    # INSERTING IF ELSE HERE FOR MAKE/BUY DECISION
+    if durop['procurement'].item() != 'Buy':
+        duropc = unpack(durop['children'])
+        duropc = duropc.reset_index(drop=True)
+
+        duropcc = pd.DataFrame()
+
+        duropcc = cpns[cpns['_id'].isin(duropc['component'])]
+        x = 1
+        duropcc = duropcc.assign(parent=rent)
+        duropcc = duropcc.assign(level=x)
+        duropcc = duropcc.reset_index(drop=True)
+
+        duropc = duropcc.merge(duropc[['component', 'quantity']], 'left',
+                               left_on='_id', right_on='component').drop(columns=['component'])
+        durorent = pd.concat([durop, duropc], axis=0).reset_index(drop=True)
+    else:
+        durorent = durop
+
+    durorent['pnladder'] = [durorent.at[i, 'parent'] + " " +
+                            durorent.at[i, 'cpn'] for i in range(len(durorent['cpn']))]
+
+    # [FORMATTING L7 DF]
+    lvls = [2, 3, 4, 5, 6, 7]
+    # lvls=[2,3,4]
+    lvlflag = True
+    if len(durorent['cpn']) == 1:
+        lvlflag = False
+    for xx in lvls:
+        # xx=6 #DEBUG ONLY
+        logging.debug("level " + str(xx))
+        if lvlflag:
+            # FORMATTING LOWER LVL DF]
+            durop = durorent
+            cols_to_move = ['parent',
+                            'cpn',
+                            'level',
+                            'quantity',
+                            'name']
+            cols = cols_to_move + \
+                [col for col in durop.columns if col not in cols_to_move]
+            durop = durop[cols]
+
+            # ix=0
+            duropc = pd.DataFrame()
+            # UNPACKING LWR LVL CHILD COMPONENTS
+            for ix in range(len(durop['cpn'])):
+                # ix+=1 #DEBUG ONLY
+                # IF PROCUREMENT IS SET TO BUY THEN SKIP AND DON'T PULL CHILD PARTS
+                if (durop.at[ix, 'procurement'] == 'Buy'):
+                    # ix=ix+1
+                    logging.debug(str(ix) + ' 1st')
+                # CURRENTLY PULLING XX LEVEL COMPONENTS SO IF LEVEL OF CURRENT ROW IS XX-1 (OR A PARENT)
+                # THEN UNPACK THE CHILDREN COL TO A TEMP DF, TAG THE CPN TO THE PARENT, AND APPEND TO THE DURO PARENT CHILD DF
+                elif (durop.at[ix, 'level'] == xx-1):
+                    temp = pd.DataFrame((durop.at[ix, 'children']))
+                    temp['parent'] = durop.at[ix, 'cpn']
+                    duropc = duropc.append(temp)
+                    # ix=ix+1
+                    logging.debug(str(ix) + ' 2nd')
+                else:
+                    # ix=ix+1
+                    logging.debug(str(ix) + ' 3rd')
+
+            # DURO API GET FOR LWR LVL COMPONENTS
+            # REMOVE DUPLICATES - IF A PN IS LISTED IN TWO PLACES ON THE BOM, THE ABOVE LOOP WILL ADD
+            # ADD IT TO THE DUROPC DF 2X AND THAT WILL CREATE DUPLICATES IN THE BOM
+            duropc = duropc.drop_duplicates(keep='first')
+
+            if (duropc.size > 0):
+                logging.debug("children = yes " + str(duropc.size))
+                cols = ['parent'] + \
+                    [col for col in duropc.columns if col != 'parent']
+                duropc = duropc[cols]
+                duropc = duropc.reset_index(drop=True)
+
+                duropcc = pd.DataFrame()
+                duropcc = cpns[cpns['_id'].isin(duropc['component'])]
+
+                duropcc = duropcc.reset_index(drop=True)
+
+                durochild = duropcc.merge(duropc[['parent', 'component', 'quantity']],
+                                          'left', left_on='_id', right_on='component').drop(columns=['component'])
+                durochild = durochild.assign(level=xx)
+                cols = cols_to_move + \
+                    [col for col in durochild.columns if col not in cols_to_move]
+                durochild = durochild[cols]
+                cols = cols_to_move + \
+                    [col for col in durorent.columns if col not in cols_to_move]
+                durorent = durorent[cols]
+
+                durobom = pd.DataFrame(columns=cols)
+                i = 0
+                for i in range(len(durorent['cpn'])):
+                    # for i in range(300):
+                    durobom = durobom.append(durorent.loc[i])
+                    if (durorent.at[i, 'level'] == xx-1):
+                        temp = durochild[durochild['parent']
+                                         == durorent.at[i, 'cpn']]
+                        durobom = durobom.append(temp)
+                    # logging.debug(i)
+                    # logging.debug(durorent.at[i,'cpn'])
+                    # i+=1
+                durorent = durobom.reset_index(drop=True).copy()
+                durorent['pnladder'] = [durorent.at[i, 'parent'] + " " +
+                                        durorent.at[i, 'cpn'] for i in range(len(durorent['cpn']))]
+            else:
+                logging.debug("no children")
+                lvlflag = False
+
+    durorent.at[0, 'quantity'] = 1
+    cols_to_move = ['parent',
+                    'cpn',
+                    'level',
+                    'quantity',
+                    'pnladder',
+                    'name']
+    cols = cols_to_move + \
+        [col for col in durop.columns if col not in cols_to_move]
+    durorent = durorent[cols]
+
+    # [COMPUTING SINGLE RACK EXTENDED BOM QTY]
+    duroext = durorent.copy()
+    # lvls= [0,1]
+    lvls = [0]
+    prnt = [{'parent': duroext.at[i, 'cpn'], 'qty':duroext.at[i, 'quantity']}
+            for i in range(len(duroext['cpn'])) if duroext.at[i, 'level'] in lvls]
+
+    prnt = pd.DataFrame(prnt)
+    # durorent['ext_qty'] = [durorent.at[i,'quantity']*1 for i in range(len(durorent['cpn'])) if durorent.at[i,'cpn'] in prnt]
+
+    # x=1
+    # pn = prnt.at[x, 'parent']
+    # qty = prnt.at[x, 'qty']
+
+    for y in range(len(prnt['parent'])):
+        pn = prnt.at[y, 'parent']
+        qty = prnt.at[y, 'qty']
+        for i in range(len(duroext['cpn'])):
+            # logging.debug(i)
+            if (duroext.at[i, 'cpn'] == pn):
+                logging.debug("pn match" + duroext.at[i, 'cpn'] + " " + pn)
+                duroext.at[i, 'ext_qty'] = duroext.at[i, 'quantity']
+            if (duroext.at[i, 'parent'] == pn):
+                logging.debug("parent match" + duroext.at[i, 'parent'] + " " + pn)
+                duroext.at[i, 'ext_qty'] = duroext.at[i, 'quantity']*qty
+
+    # i = i+1
+    # NEED TO ISOLATE LIST OF LEVEL 2 PARTS AND BLOW THAT THROUGH REST OF BOM, THEN 3, THEN 4 ETC
+    cols_to_move = ['parent',
+                    'cpn',
+                    'level',
+                    'quantity',
+                    'ext_qty',
+                    'pnladder',
+                    'name']
+    cols = cols_to_move + \
+        [col for col in durop.columns if col not in cols_to_move]
+    duroext = duroext[cols]
+
+    # lvls = [1,2,3,4]
+    lvls = duroext['level'].drop_duplicates().tolist()
+    lvls = lvls[1:]
+    lvls = lvls[:-1]
+    logging.debug(lvls)
+    logging.debug(lvls)
+    for z in lvls:
+        logging.debug(str(z) + " = level of bom explosion attempted")
+        chld = [{'parent': duroext.at[i, 'cpn'], 'qty':duroext.at[i, 'ext_qty']}
+                for i in range(len(duroext['cpn'])) if duroext.at[i, 'level'] == z]
+        chld = pd.DataFrame(chld)
+
+        for y in range(len(chld['parent'])):
+            pn = chld.at[y, 'parent']
+            qty = chld.at[y, 'qty']
+            for i in range(len(duroext['cpn'])):
+                # logging.debug(i)
+                if (duroext.at[i, 'cpn'] == pn):
+                    logging.debug("pn match" + duroext.at[i, 'cpn'] + " " + pn)
+                    # duroext.at[i, 'ext_qty'] = duroext.at[i,'quantity']
+                if (duroext.at[i, 'parent'] == pn):
+                    logging.debug("parent match" + duroext.at[i, 'parent'] + " " + pn)
+                    duroext.at[i, 'ext_qty'] = duroext.at[i, 'quantity']*qty
+        logging.debug(str(z) + " = level of bom explosion completed")
+
+    duroext['query_pn'] = oxpn
+    duroext = duroext.rename(columns={
+                             'sources.primarySource.leadTime.value': 'lead_time', 'sources.primarySource.leadTime.units': 'lt_units'})
+
+    cols_to_move = ['query_pn',
+                    'parent',
+                    'cpn',
+                    'name',
+                    'category',
+                    'level',
+                    'procurement',  # ADDED 12/16/21
+                    'quantity',
+                    'ext_qty']
+    duroshort = duroext[cols_to_move]
+    hash1 = pd.util.hash_pandas_object(duroshort).sum()
+    logging.debug(hash1)
+    # CREATE FUNCTION FOR BUILDING BOM THAT CAN BE RERUN
+    return duroext

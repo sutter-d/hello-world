@@ -10,6 +10,7 @@ import logging
 # import math
 import time
 import datetime as dt
+import sys
 # import base64
 
 # import json
@@ -143,11 +144,13 @@ def main():
     """
     st = dt.datetime.now()
 
-    with open("./creds.yml", 'r') as stream:
-        allcreds = yaml.safe_load(stream)
-    durocreds = allcreds['oxide_duro']
-    
-    histup = '/Volumes/GoogleDrive/Shared drives/Docs/Operations/OpsAutomation/HistUpdates/'
+    if len(sys.argv) > 1:
+        durocreds = sys.argv[1]
+        print("CLI Input Provided")
+    else:
+        print("NO CLI Input")
+
+    histup = './data/'
 
     # In[FORECAST DATA PULLED FROM GDRIVE]
     """
@@ -156,7 +159,8 @@ def main():
 
     logging.info("START FORECAST DATA PULLED FROM GDRIVE")
 
-    forecast_gdrive = '/Volumes/GoogleDrive/Shared drives/Docs/Operations/Production Forecast/Oxide Production Forecast.xlsx'
+    # forecast_gdrive = '/Volumes/GoogleDrive/Shared drives/Docs/Operations/Production Forecast/Oxide Production Forecast.xlsx'
+    forecast_gdrive = './data/prod_forecast.xlsx'
     forecast_get = pd.read_excel(
         forecast_gdrive, sheet_name='Production Forecast', header=0)
     forecast_get = forecast_get.loc[:, 'CPN':'Qty']
@@ -189,7 +193,7 @@ def main():
         logging.debug(forecast)
 
         # ASSIGNING PN TO QUERY AND RUNNING FUNCTION TO BUILD DURO BOM
-        durobom = oxrest.buildbom(duroid, durocreds)
+        durobom = oxrest.s2sbuildbom(duroid, durocreds)
         # SAVING DURO MPN INFO TO DF FOR LATER
         if len(mpn) == 0:
             mpn = durobom
@@ -231,16 +235,16 @@ def main():
     hash1 = pd.util.hash_pandas_object(durobom_forecast).sum()
     logging.debug(str(hash1) + " - durobom_forecast hash")
 
-    atcreds = allcreds['oxide_airtable_opsextbom']
-    rec_ids = oxrest.atblget(atcreds)
-    if rec_ids.size > 0:
-        rec_ids = rec_ids['id'].tolist()
-        rec_ids = Table(atcreds['api_key'],
-                        atcreds['base_id'],
-                        atcreds['table_name']).batch_delete(rec_ids)
+    # atcreds = allcreds['oxide_airtable_opsextbom']
+    # rec_ids = oxrest.atblget(atcreds)
+    # if rec_ids.size > 0:
+    #     rec_ids = rec_ids['id'].tolist()
+    #     rec_ids = Table(atcreds['api_key'],
+    #                     atcreds['base_id'],
+    #                     atcreds['table_name']).batch_delete(rec_ids)
 
-    durobom_upload = durobom_forecast.to_dict(orient='records')
-    oxrest.atblcreate(atcreds, durobom_upload)
+    # durobom_upload = durobom_forecast.to_dict(orient='records')
+    # oxrest.atblcreate(atcreds, durobom_upload)
 
     # durobomid = '913-0000004'
     # durobombom = buildbom(durobomid)
@@ -255,7 +259,8 @@ def main():
     # WITHOUT A UNIT COST SO THEY WON'T IMPACT THE STANDARD COST WHEN AVERAGED
     logging.info("START PULLING PROCUREMENT TRACKER FROM GDRIVE")
 
-    proc_gdrive = '/Volumes/GoogleDrive/Shared drives/Oxide Benchmark Shared/Benchmark Procurement/On Hand Inventory/Oxide Inv Receipts and Inv Tracker at Benchmark (Rochester).xlsx'
+    # proc_gdrive = '/Volumes/GoogleDrive/Shared drives/Oxide Benchmark Shared/Benchmark Procurement/On Hand Inventory/Oxide Inv Receipts and Inv Tracker at Benchmark (Rochester).xlsx'
+    proc_gdrive = './data/ox_bm_inv_shared.xlsx'
     proc_get = pd.read_excel(proc_gdrive,
                              sheet_name='Oxide Inventory Receipts',
                              header=0)
@@ -355,7 +360,6 @@ def main():
     # MERGING MPN KEY AND PROCUREMENT DATA INTO ONE DF
     mpn['mpn'] = mpn['mpn'].str.lower()
     proc['proc_mpn'] = proc['proc_mpn'].astype(str).str.lower()
-    mpn = mpn.sort_values(by=['mpn'])
     mpn_proc = mpn.merge(proc, 'left', left_on='mpn', right_on='proc_mpn')
     mpn_proc['mpn'] = mpn_proc['mpn'].fillna('-')
     mpn_proc['proc_mpn'] = mpn_proc['proc_mpn'].fillna('-')
@@ -382,7 +386,7 @@ def main():
     durobom_forecast_mpn_proc = durobom_forecast.merge(mpn_proc,
                                                        'left',
                                                        'cpn')
-    reports = '/Volumes/GoogleDrive/Shared drives/Docs/Operations/OpsAutomation/Reports/'
+    reports = './data/'
     csv = histup + 'durobom_forecast_mpn_proc' + \
         time.strftime("%Y-%m-%d-%H%M%S") + '.xlsx'
     durobom_forecast_mpn_proc.to_excel(csv, index=False)
@@ -534,10 +538,16 @@ def main():
     mech_comps_forecast_mpn_proc = comps_forecast_mpn_proc[~comps_forecast_mpn_proc['category'].isin(
         elec['Value'])]
 
+    old_cf = './data/old_comp_forecast.xlsx'
+    old_cf_get = pd.read_excel(old_cf,
+                             sheet_name='Elec.Component.Analysis',
+                             header=0)
+    old_cf = old_cf_get[['cpn', 'Notes']]
+    elec_comps_forecast_mpn_proc = elec_comps_forecast_mpn_proc.merge(old_cf, 'left', 'cpn')
+
     # In[CREATE AND NAME XLS MULTI-WORKSHEET FILE]
     # CREATE AND NAME XLS MULTI-WORKSHEET FILE
-    csv = histup + 'Component_Forecast_Analysis_' + \
-        time.strftime("%Y-%m-%d-%H%M%S") + '.xlsx'
+    csv = reports + 'Component_Forecast_Analysis.xlsx'
     writer = pd.ExcelWriter(csv, engine='xlsxwriter')
 
     # Write each dataframe to a different worksheet.
@@ -590,7 +600,7 @@ if __name__ == '__main__':
         opsconfigs = yaml.safe_load(stream)
     logconfigs = opsconfigs['logging_configs']
     loglvl = logconfigs['level']
-    logging.basicConfig(filename=('/Volumes/GoogleDrive/Shared drives/Docs/Operations/OpsAutomation/logs/test/compforecast' + time.strftime("%Y-%m-%d") + '.log'),
+    logging.basicConfig(filename=('./gitlogs/compforecast' + time.strftime("%Y-%m-%d") + '.log'),
                         level=loglvl,
                         format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
     # logger = logging.getLogger(__name__)
