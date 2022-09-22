@@ -10,16 +10,16 @@ import os.path
 import time
 import io
 import shutil
-import pandas as pd
-import restapi as oxrest
 import mimetypes
 import base64
+from email.mime.text import MIMEText
+import pandas as pd
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-from email.mime.text import MIMEText
 
+import ds_utils as ds
 
 # In[Create a message for an email fcn]
 def create_message(sender, to, subject, message_text):
@@ -42,6 +42,8 @@ def create_message(sender, to, subject, message_text):
     return {'raw': base64.urlsafe_b64encode(message.as_bytes())}
 
 # In[Send an email message fcn]
+
+
 def send_message(service, user_id, message):
     """Send an email message.
 
@@ -64,6 +66,7 @@ def send_message(service, user_id, message):
 
 # In[__name__ == __main__]
 
+
 if __name__ == '__main__':
     print("starting to build googleapi service object")
     SCOPES = ['https://mail.google.com/']
@@ -72,8 +75,9 @@ if __name__ == '__main__':
     creds = service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE,
         scopes=SCOPES,
-        subject='oxide_ops_automation@oxidecomputer.com' #this could be removed and may be redundant with line 90 below
-        )
+        # this could be removed and may be redundant with line 90 below
+        subject='oxide_ops_automation@oxidecomputer.com'
+    )
 
     print("built creds object: " + str(creds))
 
@@ -81,12 +85,13 @@ if __name__ == '__main__':
 
     # BELOW HERE IS THE OLD EMAIL GENERATOR
     # UNCOMMENT WHEN BUILD OBJECT RETURNS A SUCCESSFUL QUERY
-    msg_bdy = "Team  - there's a new Comp Forecast file available - please follow this link: https://drive.google.com/drive/folders/1cifHUNhTLyeuDWtdhhmbJ176sL0O9uON"
+    msg_bdy = "Team  - there's a new Comp Forecast file available - please follow this link: https://drive.google.com/drive/folders/1cifHUNhTLyeuDWtdhhmbJ176sL0O9uON To Update the report, follow this link: https://github.com/oxidecomputer/treadstone/actions/workflows/run_git_compforecast_s2s.yml and select 'Run Workflow'."
     msg_sub = time.strftime("%Y-%m-%d") + " New Comp Forecast file"
     msg = create_message('oxide_ops_automation@oxidecomputer.com',
-                          'procurement@oxidecomputer.com',
-                          msg_sub,
-                          msg_bdy)
+                         'procurement@oxidecomputer.com',
+                         # 'daniel@oxidecomputer.com',
+                         msg_sub,
+                         msg_bdy)
 
     msg['raw'] = msg['raw'].decode()
 

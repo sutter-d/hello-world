@@ -35,7 +35,7 @@ from pyairtable import Table, Api
 import requests
 from requests import HTTPError
 
-import restapi as oxrest
+import ds_utils as ds
 
 # requests.packages.urllib3.disable_warnings()
 # with open("./config.yml", 'r') as stream:
@@ -88,7 +88,7 @@ def main():
     dkcreds = allcreds['oxide_digikey']
 
     # FIRST Refresh the Access Token
-    dkcreds = oxrest.dktokenrefresh(dkcreds)
+    dkcreds = ds.dktokenrefresh(dkcreds)
 
     # SECOND Update creds.yml
     allcreds['oxide_digikey'] = dkcreds
@@ -97,7 +97,7 @@ def main():
 
     # THIRD Run OrderHist API Query
     dkopncls = 'true'  # 'true' = OPEN RECORDS; 'false' = ALL RECORDS
-    dkordernumbers = oxrest.dkordhistapi(dkcreds, dkopncls)
+    dkordernumbers = ds.dkordhistapi(dkcreds, dkopncls)
     logging.info("dkordhistapi fcn ran successfully")
     csv = histup + 'rawdkordernumbers' + \
         time.strftime("%Y%m%d-%H%M%S") + '.csv'
@@ -105,7 +105,7 @@ def main():
     dkordernumbers = dkordernumbers['SalesorderId']
 
     # FOURTH Run OrderStatus API Query
-    dkorderdetails = oxrest.dkordstatapi(dkcreds, dkordernumbers)
+    dkorderdetails = ds.dkordstatapi(dkcreds, dkordernumbers)
     logging.info("dkordstatapi fcn ran successfully")
     csv = histup + 'rawdkorderdetails' + \
         time.strftime("%Y%m%d-%H%M%S") + '.csv'
@@ -120,7 +120,7 @@ def main():
     shipdetails = shipdetails.set_index(
         ['SalesorderId']).apply(pd.Series.explode).reset_index()
     shipdetails = pd.concat([shipdetails,
-                             oxrest.unpack(shipdetails['ShippingDetails'])],
+                             ds.unpack(shipdetails['ShippingDetails'])],
                             axis=1)
     shipdetails = shipdetails[shipdetails['CanceledOrVoided'] != True]
     for i in shipdetails.index:
@@ -135,7 +135,7 @@ def main():
     lineitems = lineitems.set_index(['SalesorderId']).apply(
         pd.Series.explode).reset_index()
     lineitems = pd.concat([lineitems,
-                           oxrest.unpack(lineitems['LineItems'])],
+                           ds.unpack(lineitems['LineItems'])],
                           axis=1)
     for i in lineitems.index:
         lineitems.at[i, 'key'] = str(
@@ -166,7 +166,7 @@ def main():
         pd.Series.explode).reset_index()
     backorder = backorder.dropna(subset=['Schedule'])
     backorder = pd.concat([backorder.reset_index(drop=True),
-                           oxrest.unpack(backorder['Schedule'])],
+                           ds.unpack(backorder['Schedule'])],
                           axis=1)
     backorder = backorder.drop(columns=['Schedule'])
 

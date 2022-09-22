@@ -16,98 +16,142 @@ import yaml
 import logging
 
 import pandas as pd
-import restapi as oxrest
+import ds_utils as ds
 
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 from google.oauth2 import service_account
 
-requests.packages.urllib3.disable_warnings()
-with open("./config.yml", 'r') as stream:
-    opsconfigs = yaml.safe_load(stream)
-logconfigs = opsconfigs['logging_configs']
-loglvl = logconfigs['level']
-logging.basicConfig(filename=('./gitlogs/gdrive_get_s2s_' + time.strftime("%Y-%m-%d") + '.log'),
-                    level=loglvl,
-                    format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
+# requests.packages.urllib3.disable_warnings()
+# with open("./config.yml", 'r') as stream:
+#     opsconfigs = yaml.safe_load(stream)
+# logconfigs = opsconfigs['logging_configs']
+# loglvl = logconfigs['level']
+# logging.basicConfig(filename=('./gitlogs/gdrive_get_s2s_' + time.strftime("%Y-%m-%d") + '.log'),
+#                     level=loglvl,
+#                     format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
 
-print("starting to build googleapi service object")
+# In[get_file fcn]
 
-SCOPES = ['https://www.googleapis.com/auth/drive']
 
-creds = None
+def get_file(oxfile_id, oxfile_name):
+    file_id = oxfile_id
+    logging.debug("starting to build googleapi service object")
 
-SERVICE_ACCOUNT_FILE = './oxops-gcp-project-service.json'
+    SCOPES = ['https://www.googleapis.com/auth/drive']
 
-creds = service_account.Credentials.from_service_account_file(
+    creds = None
+
+    SERVICE_ACCOUNT_FILE = './oxops-gcp-project-service.json'
+
+    creds = service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 
-print("built creds object: " + str(creds))
+    logging.debug("built creds object: " + str(creds))
 
-# In[]
-service = build('drive', 'v3', credentials=creds)
-print("built service object: "+str(service))
-fh = io.BytesIO()
+    # In[BUILDING GOOGLE DRIVE SERVICE API OBJECT]
+    # We'll assign our s2s creds and use this object to pull files from Gdrive
+    # Added cache_discovery=False to silence a file_cache error the build function
+    # was throwing
+    service = build('drive', 'v3', credentials=creds, cache_discovery=False)
+    logging.debug("built service object: "+str(service))
+    fh = io.BytesIO()
 
-file_id = ['1FCbWNjMVxbwumpXy84MMtTi4wu-I7qd_', #BM AND OXIDE INVENTORY FILE IN SHARED DOC FOLDER
-           '12fgP8PwRlmmsySJVCt3RjEmo8ZsG_igG'] #OXIDE PRODUCTION FORECAST FILE
-print('making request for inv file')
-request = service.files().get_media(fileId=file_id[0])
+    # This is the file pull request
+    logging.debug('making request for inv file')
+    request = service.files().get_media(fileId=file_id)
 
-downloader = MediaIoBaseDownload(fh, request)
-done = False
-while done is False:
-    status, done = downloader.next_chunk()
-    print("Download %d%%" % int(status.progress() * 100))
+    # Storing the file to memory and providing download progress
+    downloader = MediaIoBaseDownload(fh, request)
+    done = False
+    while done is False:
+        status, done = downloader.next_chunk()
+        logging.debug("Download %d%%" % int(status.progress() * 100))
 
-# The file has been downloaded into RAM, now save it in a file
-print("download complete, saving file from RAM to location")
-fh.seek(0)
-print(fh)
-with open('./data/ox_bm_inv_shared.xlsx', 'wb') as f:
-    shutil.copyfileobj(fh, f)
+    # The file has been downloaded into RAM, now save it in a file
+    logging.debug("download complete, saving %s from RAM to location" % file_id)
+    fh.seek(0)
+    logging.debug(fh)
+    with open('./data/' + str(oxfile_name) + '.xlsx', 'wb') as f:
+        shutil.copyfileobj(fh, f)
+    logging.debug("download save to location complete")
 
-# In[]
 
-request = service.files().get_media(fileId=file_id[1])
+# In[get_list fcn]
+def get_list(oxshared_id, oxfolder_id):
 
-downloader = MediaIoBaseDownload(fh, request)
-done = False
-while done is False:
-    status, done = downloader.next_chunk()
-    print("Download %d%%" % int(status.progress() * 100))
+    logging.debug("starting to build googleapi service object")
 
-# The file has been downloaded into RAM, now save it in a file
-fh.seek(0)
-with open('./data/prod_forecast.xlsx', 'wb') as f:
-    shutil.copyfileobj(fh, f)
+    SCOPES = ['https://www.googleapis.com/auth/drive']
 
-# In[]
-shared_drive_id = '0AKcpdSVwv34AUk9PVA'
-folder_id='1cifHUNhTLyeuDWtdhhmbJ176sL0O9uON'
-qry = "'{}' in parents and (trashed=false)".format(folder_id)
-file = service.files().list(corpora = 'drive',
-                            q=qry,
-                            orderBy='createdTime desc',
-                            driveId = shared_drive_id,
-                            includeItemsFromAllDrives=True,
-                            supportsAllDrives=True,
-                            pageToken=None).execute()
+    creds = None
 
-df = pd.DataFrame(file)
-df = oxrest.unpack(df['files'])
-df = df[df['name'].str.startswith('Component_Forecast')]
-df = df.loc[0,'id']
+    SERVICE_ACCOUNT_FILE = './oxops-gcp-project-service.json'
 
-request = service.files().get_media(fileId=df)
+    creds = service_account.Credentials.from_service_account_file(
+        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 
-downloader = MediaIoBaseDownload(fh, request)
-done = False
-while done is False:
-    status, done = downloader.next_chunk()
-    print("Download %d%%" % int(status.progress() * 100))
+    logging.debug("built creds object: " + str(creds))
 
-# The file has been downloaded into RAM, now save it in a file
-fh.seek(0)
-with open('./data/old_comp_forecast.xlsx', 'wb') as f:
-    shutil.copyfileobj(fh, f)
+    # In[BUILDING GOOGLE DRIVE SERVICE API OBJECT]
+    # We'll assign our s2s creds and use this object to pull files from Gdrive
+    # Added cache_discovery=False to silence a file_cache error the build function
+    # was throwing
+    service = build('drive', 'v3', credentials=creds, cache_discovery=False)
+    logging.debug("built service object: "+str(service))
+
+    logging.debug(
+        "Setting DriveID and Folder ID for recent compforecast file pull")
+    shared_drive_id = oxshared_id
+    folder_id = oxfolder_id
+    qry = "'{}' in parents and (trashed=false)".format(folder_id)
+    file = service.files().list(corpora='drive',
+                                q=qry,
+                                orderBy='createdTime desc',
+                                driveId=shared_drive_id,
+                                includeItemsFromAllDrives=True,
+                                supportsAllDrives=True,
+                                pageToken=None).execute()
+
+    logging.debug("Saving file list DF to var and cleaning")
+
+    df = pd.DataFrame(file)
+    df = ds.unpack(df['files'])
+    return df
+
+# In[Main Block]
+
+if __name__ == '__main__':
+    requests.packages.urllib3.disable_warnings()
+    with open("./config.yml", 'r') as stream:
+        opsconfigs = yaml.safe_load(stream)
+    logconfigs = opsconfigs['logging_configs']
+    loglvl = logconfigs['level']
+    logging.basicConfig(filename=('./gitlogs/gdrive_get_s2s_' + time.strftime("%Y-%m-%d") + '.log'),
+                        level=loglvl,
+                        format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
+
+    # Here we are pulling the inventory and production forecast files
+    # We pull each file and save it to the ./data folder for use
+    data = [['1FCbWNjMVxbwumpXy84MMtTi4wu-I7qd_', 'ox_bm_inv_shared'],  # BM AND OXIDE INVENTORY FILE IN SHARED DOC FOLDER
+            ['1UXyOtpZ9OEL3SmTq-Ak0pUUlVz1Q6mS2', 'prod_forecast']]  # OXIDE PRODUCTION FORECAST FILE
+
+    file_id = pd.DataFrame(data=data, columns=['id', 'name'])
+
+    for x in range(len(file_id['id'])):
+        get_file(file_id.at[x, 'id'], file_id.at[x, 'name'])
+
+    # Here we are pulling the meta data for the ops auto > reports folder
+    # We need to find the latest version of the comp forecast file to
+    # Copy over the notes and comments
+
+    drive_id = '0AKcpdSVwv34AUk9PVA' #oxide shared drive id - reqd for meta data pull
+    flder_id = '1cifHUNhTLyeuDWtdhhmbJ176sL0O9uON' #ops auto > reports folder id
+
+    df = get_list(drive_id, flder_id)
+    df = df[df['name'].str.startswith(
+        'Component_Forecast')].reset_index(drop=True)
+    df = df.loc[0, 'id']
+    logging.debug("File ID: " + df)
+
+    get_file(df, 'old_comp_forecast')

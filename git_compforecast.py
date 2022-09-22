@@ -529,6 +529,9 @@ def main():
     elec = pd.read_csv("./DURO-CATEGORY-REFERENCES.csv")
     elec = elec[elec['Category'] ==
                 "-- ELECTRICAL --"].drop(columns=['Category'])
+    assys = ['Fan', 'Cable Assembly', 'Heatsink']
+    assys = pd.DataFrame(assys, columns=['Value'])
+    elec = elec.append(assys)
 
     elec_comps_forecast_mpn_proc = comps_forecast_mpn_proc[comps_forecast_mpn_proc['category'].isin(
         elec['Value'])]
@@ -542,12 +545,14 @@ def main():
     old_cf = old_cf_get[['cpn', 'Notes']]
     elec_comps_forecast_mpn_proc = elec_comps_forecast_mpn_proc.merge(old_cf, 'left', 'cpn')
 
+    ctb = elec_comps_forecast_mpn_proc.loc[(elec_comps_forecast_mpn_proc['lot2_ok']=='No')]
     # In[CREATE AND NAME XLS MULTI-WORKSHEET FILE]
     # CREATE AND NAME XLS MULTI-WORKSHEET FILE
     csv = reports + 'Component_Forecast_Analysis.xlsx'
     writer = pd.ExcelWriter(csv, engine='xlsxwriter')
 
     # Write each dataframe to a different worksheet.
+    ctb.to_excel(writer, sheet_name='ClearToBuild')
     elec_comps_forecast_mpn_proc.to_excel(
         writer, sheet_name='Elec.Component.Analysis')
     mech_comps_forecast_mpn_proc.to_excel(

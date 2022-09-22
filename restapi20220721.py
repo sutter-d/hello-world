@@ -41,7 +41,7 @@ def unpack(oxjs):
     else:
         df = list(filter(None, js))
         df = pd.json_normalize(df)
-    logging.debug("Ran unpack fcn successfully")
+    logging.info("Ran unpack fcn successfully")
     return df
 
 # In[dktokenrefresh]
@@ -524,7 +524,7 @@ def buildbom(oxpn, oxcreds):
         duropcc = duropcc.assign(level=x)
         duropcc = duropcc.reset_index(drop=True)
 
-        duropc = duropcc.merge(duropc[['component', 'quantity', 'refDes']], 'left',
+        duropc = duropcc.merge(duropc[['component', 'quantity']], 'left',
                                left_on='_id', right_on='component').drop(columns=['component'])
         durorent = pd.concat([durop, duropc], axis=0).reset_index(drop=True)
     else:
@@ -549,7 +549,7 @@ def buildbom(oxpn, oxcreds):
                             'cpn',
                             'level',
                             'quantity',
-                            'name','refDes']
+                            'name']
             cols = cols_to_move + \
                 [col for col in durop.columns if col not in cols_to_move]
             durop = durop[cols]
@@ -592,7 +592,7 @@ def buildbom(oxpn, oxcreds):
 
                 duropcc = duropcc.reset_index(drop=True)
 
-                durochild = duropcc.merge(duropc[['parent', 'component', 'quantity', 'refDes']],
+                durochild = duropcc.merge(duropc[['parent', 'component', 'quantity']],
                                           'left', left_on='_id', right_on='component').drop(columns=['component'])
                 durochild = durochild.assign(level=xx)
                 cols = cols_to_move + \
@@ -627,7 +627,7 @@ def buildbom(oxpn, oxcreds):
                     'level',
                     'quantity',
                     'pnladder',
-                    'name','refDes']
+                    'name']
     cols = cols_to_move + \
         [col for col in durop.columns if col not in cols_to_move]
     durorent = durorent[cols]
@@ -666,7 +666,7 @@ def buildbom(oxpn, oxcreds):
                     'quantity',
                     'ext_qty',
                     'pnladder',
-                    'name','refDes']
+                    'name']
     cols = cols_to_move + \
         [col for col in durop.columns if col not in cols_to_move]
     duroext = duroext[cols]
@@ -862,7 +862,7 @@ def s2sbuildbom(oxpn, oxcreds):
         duropcc = duropcc.assign(level=x)
         duropcc = duropcc.reset_index(drop=True)
 
-        duropc = duropcc.merge(duropc[['component', 'quantity', 'refDes']], 'left',
+        duropc = duropcc.merge(duropc[['component', 'quantity']], 'left',
                                left_on='_id', right_on='component').drop(columns=['component'])
         durorent = pd.concat([durop, duropc], axis=0).reset_index(drop=True)
     else:
@@ -887,8 +887,7 @@ def s2sbuildbom(oxpn, oxcreds):
                             'cpn',
                             'level',
                             'quantity',
-                            'name',
-                            'refDes']
+                            'name']
             cols = cols_to_move + \
                 [col for col in durop.columns if col not in cols_to_move]
             durop = durop[cols]
@@ -931,7 +930,7 @@ def s2sbuildbom(oxpn, oxcreds):
 
                 duropcc = duropcc.reset_index(drop=True)
 
-                durochild = duropcc.merge(duropc[['parent', 'component', 'quantity', 'refDes']],
+                durochild = duropcc.merge(duropc[['parent', 'component', 'quantity']],
                                           'left', left_on='_id', right_on='component').drop(columns=['component'])
                 durochild = durochild.assign(level=xx)
                 cols = cols_to_move + \
@@ -966,8 +965,7 @@ def s2sbuildbom(oxpn, oxcreds):
                     'level',
                     'quantity',
                     'pnladder',
-                    'name',
-                    'refDes']
+                    'name']
     cols = cols_to_move + \
         [col for col in durop.columns if col not in cols_to_move]
     durorent = durorent[cols]
@@ -1006,8 +1004,7 @@ def s2sbuildbom(oxpn, oxcreds):
                     'quantity',
                     'ext_qty',
                     'pnladder',
-                    'name',
-                    'refDes']
+                    'name']
     cols = cols_to_move + \
         [col for col in durop.columns if col not in cols_to_move]
     duroext = duroext[cols]
@@ -1049,8 +1046,7 @@ def s2sbuildbom(oxpn, oxcreds):
                     'level',
                     'procurement',  # ADDED 12/16/21
                     'quantity',
-                    'ext_qty',
-                    'refDes']
+                    'ext_qty']
     duroshort = duroext[cols_to_move]
     hash1 = pd.util.hash_pandas_object(duroshort).sum()
     logging.debug(hash1)
@@ -1114,7 +1110,7 @@ def s2sbuildbom_all(oxpn, oxcreds):
     duropcc = duropcc.assign(level=x)
     duropcc = duropcc.reset_index(drop=True)
 
-    duropc = duropcc.merge(duropc[['component', 'quantity', 'refDes']], 'left',
+    duropc = duropcc.merge(duropc[['component', 'quantity']], 'left',
                            left_on='_id', right_on='component').drop(columns=['component'])
     durorent = pd.concat([durop, duropc], axis=0).reset_index(drop=True)
     # else:
@@ -1139,8 +1135,7 @@ def s2sbuildbom_all(oxpn, oxcreds):
                             'cpn',
                             'level',
                             'quantity',
-                            'name',
-                            'refDes']
+                            'name']
             cols = cols_to_move + \
                 [col for col in durop.columns if col not in cols_to_move]
             durop = durop[cols]
@@ -1183,7 +1178,7 @@ def s2sbuildbom_all(oxpn, oxcreds):
 
                 duropcc = duropcc.reset_index(drop=True)
 
-                durochild = duropcc.merge(duropc[['parent', 'component', 'quantity', 'refDes']],
+                durochild = duropcc.merge(duropc[['parent', 'component', 'quantity']],
                                           'left', left_on='_id', right_on='component').drop(columns=['component'])
                 durochild = durochild.assign(level=xx)
                 cols = cols_to_move + \
@@ -1218,8 +1213,7 @@ def s2sbuildbom_all(oxpn, oxcreds):
                     'level',
                     'quantity',
                     'pnladder',
-                    'name',
-                    'refDes']
+                    'name']
     cols = cols_to_move + \
         [col for col in durop.columns if col not in cols_to_move]
     durorent = durorent[cols]
@@ -1258,8 +1252,7 @@ def s2sbuildbom_all(oxpn, oxcreds):
                     'quantity',
                     'ext_qty',
                     'pnladder',
-                    'name',
-                    'refDes']
+                    'name']
     cols = cols_to_move + \
         [col for col in durop.columns if col not in cols_to_move]
     duroext = duroext[cols]
@@ -1301,8 +1294,7 @@ def s2sbuildbom_all(oxpn, oxcreds):
                     'level',
                     'procurement',  # ADDED 12/16/21
                     'quantity',
-                    'ext_qty',
-                    'refDes']
+                    'ext_qty']
     duroshort = duroext[cols_to_move]
     hash1 = pd.util.hash_pandas_object(duroshort).sum()
     logging.debug(hash1)

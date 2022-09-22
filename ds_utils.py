@@ -12,6 +12,7 @@ from requests import HTTPError
 import yaml
 import json
 import pandas as pd
+import shutil
 from pyairtable import Api, Table
 
 import os.path
@@ -43,6 +44,21 @@ def unpack(oxjs):
         df = pd.json_normalize(df)
     logging.debug("Ran unpack fcn successfully")
     return df
+
+# In[clear_dir]
+# Helper function for clearing a folder
+
+def clear_dir(folder):
+    for filename in os.listdir(folder):
+        if filename.endswith(".py") is False:
+            file_path = os.path.join(folder, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as exc:
+                print('Failed to delete %s. Reason: %s' % (file_path, exc))
 
 # In[dktokenrefresh]
 

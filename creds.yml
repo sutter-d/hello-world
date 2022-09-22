@@ -35,14 +35,14 @@ oxide_arrow:
   stat_api_uname: procurement@oxidecomputer.com
   stat_api_url: https://www.arrow.com/services-cc/automatedCheckout/checkOrderStatus
 oxide_digikey:
-  access_token: d049pM8opKpcMBf8F3vKVPCTd5f5
+  access_token: DfC6OLdRiQzUeFVIep7RhclEoT28
   auth_url: https://api.digikey.com/v1/oauth2/authorize
   callback_url: https://localhost
   client_id: lpX1b3H9uDleWDFp8TSxVa9VMJPGopv7
   client_secret: ttQGRFXRbdrTExth
   cust_id: 13447955
   hist_api_url: https://api.digikey.com/OrderDetails/v3/History
-  refresh_token: WfZDqUNAWxEVi3CXAfHPgiDZg4Xf9Cfw
+  refresh_token: 0czUqQlDYb24eanzpNSyRQI85ZFgGsJY
   stat_api_url: https://api.digikey.com/OrderDetails/v3/Status/
   token_url: https://api.digikey.com/v1/oauth2/token
 oxide_digikey_test:
@@ -63,3 +63,7 @@ oxide_mouser:
   api_key: 2a64f70b-d8bf-462e-ab04-53eba0f9be32
   hist_api_url: https://api.mouser.com/api/v1.0/orderhistory/ByDateFilter?
   stat_api_url: https://api.mouser.com/api/v1.0/order/
+github:
+  access_token: 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
+duro:
+  api_key: 16152961423738m50/MAHXgvcvj4RMROq2g==

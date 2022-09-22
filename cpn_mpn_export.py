@@ -21,7 +21,7 @@ import pandas as pd
 # from pyairtable import Api, Base, Table
 import requests
 
-import restapi as oxrest
+import ds_utils as ds
 
 
 def cpnmpn(oxcpns):
@@ -45,9 +45,9 @@ def cpnmpn(oxcpns):
     # 'sources.manufacturers' and ties it back to the CPN
     # The 1 CPN to many MPN relationship is preserved on the 3rd line
     cpnbom_mpn = oxcpns.set_index(['cpn'])
-    cpnbom_mpn = oxrest.unpack(cpnbom_mpn['sources.manufacturers'])
+    cpnbom_mpn = ds.unpack(cpnbom_mpn['sources.manufacturers'])
     cpnbom_mpn = pd.concat([cpnbom_mpn.reset_index(drop=False),
-                            oxrest.unpack(cpnbom_mpn['mpn'])],
+                            ds.unpack(cpnbom_mpn['mpn'])],
                            axis = 1)
     cpnbom_mpn = cpnbom_mpn[['ind', 'key']].rename(columns = {'ind': 'cpn', 'key': 'mpn'}).drop_duplicates()
     return cpnbom_mpn
@@ -63,7 +63,7 @@ if __name__ == '__main__':
                         format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
 
     logging.info("START cpn_mpn_export.py __main__ HERE")
-    cpns = oxrest.cpn()
+    cpns = ds.cpn()
     cpn_mpns = cpnmpn(cpns)
 
     # Save results to your local desktop

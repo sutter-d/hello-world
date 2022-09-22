@@ -15,43 +15,80 @@ import requests
 import yaml
 
 import pandas as pd
-import restapi as oxrest
+import ds_utils as ds
 
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from googleapiclient.http import MediaFileUpload
 
-requests.packages.urllib3.disable_warnings()
-with open("./config.yml", 'r') as stream:
-    opsconfigs = yaml.safe_load(stream)
-logconfigs = opsconfigs['logging_configs']
-loglvl = logconfigs['level']
-logging.basicConfig(filename=('./gitlogs/gdrive_post_s2s_' + time.strftime("%Y-%m-%d") + '.log'),
-                    level=loglvl,
-                    format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
+def main(oxfolder='1cifHUNhTLyeuDWtdhhmbJ176sL0O9uON'):
+    SCOPES = ['https://www.googleapis.com/auth/drive']
 
-SCOPES = ['https://www.googleapis.com/auth/drive']
+    creds = None
+    
+    SERVICE_ACCOUNT_FILE = './oxops-gcp-project-service.json'
+    
+    creds = service_account.Credentials.from_service_account_file(
+            SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+    
+    logging.debug("built creds object: " + str(creds))
+    
+    service = build('drive', 'v3', credentials=creds, cache_discovery=False)
+    # fh = io.BytesIO()
+    logging.info("UPLOADING ALL FILES FROM ./uploads/")
+    
+    #UPLOADING ALL DOCS FROM THE ./uploads/ FOLDER TO GDRIVE OPSAUTO > REPORTS FOLDER
+    # if oxfolder:
+    #     folder_id = oxfolder
+    #     logging.debug("Folder Id: {folder_id} entered as input")
+    # else:
+    #     folder_id='1cifHUNhTLyeuDWtdhhmbJ176sL0O9uON'
+    #     logging.debug("Default Folder Id: {folder_id} entered as input")
+    folder_id = oxfolder
+    logging.info("Folder Id: %s entered as input for destination folder" % folder_id)
 
-creds = None
+    
+    directory = './uploads/'
+    
+    for filename in os.listdir(directory):
+        if filename.endswith(".py")==False:
+            logging.debug(os.path.join(directory, filename))
+            logging.debug(filename.replace('.xlsx', ''))
+            file_metadata = {'name': filename.replace('.xlsx', '') + time.strftime("%Y-%m-%d") + '.xlsx',
+                              'parents': [folder_id]}
+            media = MediaFileUpload(os.path.join(directory, filename))
+            file = service.files().create(body=file_metadata,
+                                                media_body=media,
+                                                supportsAllDrives=True,
+                                                fields='id').execute()
+            print('File ID: %s' % file.get('id'))
+    
+    logging.info("UPLOADING ALL LOGS FROM ./gitlogs/")
+    #UPLOADING ALL LOGS FROM THE GITLOGS FOLDER TO GDRIVE OPSAUTO > LOGS FOLDER
+    folder_id='1BOLxZBfpBt0zPuM1FUt06D60AVTZnxLH'
+    logging.info("Folder Id: %s used for gitlogs" % folder_id)
+    directory = './gitlogs/'
+    for filename in os.listdir(directory):
+        if filename.endswith(".py")==False:
+            logging.debug(os.path.join(directory, filename))
+            logging.debug(filename.replace('.xlsx', ''))
+            file_metadata = {'name': filename,
+                              'parents': [folder_id]}
+            media = MediaFileUpload(os.path.join(directory, filename))
+            file = service.files().create(body=file_metadata,
+                                                media_body=media,
+                                                supportsAllDrives=True,
+                                                fields='id').execute()
+            print('File ID: %s' % file.get('id'))
 
-SERVICE_ACCOUNT_FILE = './oxops-gcp-project-service.json'
 
-creds = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-
-logging.info("built creds object: " + str(creds))
-
-service = build('drive', 'v3', credentials=creds)
-fh = io.BytesIO()
-
-folder_id='1cifHUNhTLyeuDWtdhhmbJ176sL0O9uON'
-
-file_metadata = {'name': 'Component_Forecast_Analysis_' + time.strftime("%Y-%m-%d") + '.xlsx',
-                 'parents': [folder_id]}
-media = MediaFileUpload('./data/Component_Forecast_Analysis.xlsx')
-file = service.files().create(body=file_metadata,
-                                    media_body=media,
-                                    supportsAllDrives=True,
-                                    fields='id').execute()
-print('File ID: %s' % file.get('id'))
-
+if __name__ == '__main__':
+    requests.packages.urllib3.disable_warnings()
+    with open("./config.yml", 'r') as stream:
+        opsconfigs = yaml.safe_load(stream)
+    logconfigs = opsconfigs['logging_configs']
+    loglvl = logconfigs['level']
+    logging.basicConfig(filename=('./gitlogs/gdrive_post_s2s_' + time.strftime("%Y-%m-%d") + '.log'),
+                        level=loglvl,
+                        format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
+    main()

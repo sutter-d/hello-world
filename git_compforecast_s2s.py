@@ -7,21 +7,16 @@ Created on Tue Nov 16 16:59:01 2021
 """
 
 import logging
-# import math
 import time
 import datetime as dt
 import sys
-# import base64
 
-# import json
 import yaml
 import pandas as pd
-from pyairtable import Table
 import requests
+import argparse
 
-import restapi as oxrest
-# import openorders as oxopn
-
+import ds_utils as ds
 
 """
 # =============================================================================
@@ -38,7 +33,7 @@ import restapi as oxrest
 # # 10. JOIN AGGREGATED FORECAST DEMAND WITH AGGREGATED PROCURMENT DATA FOR COMPONENT FORECAST FILE
 # =============================================================================
 """
-# In[BUILD BOM FUNCTION]
+# In[vars and dfs]
 """
 BUILD BOM FUNCTION <= MOVED TO RESTAPI TO USE IN OTHER SCRIPTS
 """
@@ -78,24 +73,11 @@ def prodsched(oxforecast, oxbom):
     forecast = oxforecast
     duroext = oxbom
     for x in range(len(forecast['key'])):
-        # qty = forecast.at[x, 'volume']
-        # key = forecast.at[x, 'key']
         logging.debug(forecast.at[x, 'key'])
         duroext[forecast.at[x, 'key']] = [
             forecast.at[x, 'volume'] * i for i in duroext['ext_qty']]
 
-    # prod_lots = ['evt1',
-    #                  'evt2',
-    #                  'dvt',
-    #                  'pvt',
-    #                  'lot1',
-    #                  'lot2',
-    #                  'lot3',
-    #                  'lot4']
-
     duroext['forecast_total'] = duroext[prod_lots].sum(axis=1)
-    # duroext['forecast_total'] = duroext['evt1'] + duroext['evt2'] + \
-    #     duroext['dvt'] + duroext['pvt'] + duroext['mp']
 
     cols_to_move = ['query_pn',
                     'parent',
@@ -106,11 +88,6 @@ def prodsched(oxforecast, oxbom):
                     'procurement',
                     'quantity',
                     'ext_qty',
-                    # 'evt1', #INSERTING VIA SLICE BELOW
-                    # 'evt2',
-                    # 'dvt',
-                    # 'pvt',
-                    # 'mp',
                     'forecast_total',
                     'lead_time',
                     'lt_units']
@@ -127,7 +104,7 @@ def prodsched(oxforecast, oxbom):
 
 # In[MAIN FUNCTION]
 
-def main():
+def main(api_key):
     """
 
     Returns
@@ -143,14 +120,20 @@ def main():
 
     """
     st = dt.datetime.now()
-
-    if len(sys.argv) > 1:
-        durocreds = sys.argv[1]
-        print("CLI Input Provided")
-    else:
-        print("NO CLI Input")
-
     histup = './data/'
+    durocreds = api_key
+
+    # if len(sys.argv) > 1:
+    #     durocreds = sys.argv[1]
+    #     print("CLI Input Provided")
+    # else:
+    #     with open("./creds.yml", 'r') as stream:
+    #         allcreds = yaml.safe_load(stream)
+    #     durocreds = allcreds['oxide_duro']
+    #     durocreds = durocreds['api_key']
+    #     print("NO CLI Input")
+
+
 
     # In[FORECAST DATA PULLED FROM GDRIVE]
     """
@@ -162,7 +145,7 @@ def main():
     # forecast_gdrive = '/Volumes/GoogleDrive/Shared drives/Docs/Operations/Production Forecast/Oxide Production Forecast.xlsx'
     forecast_gdrive = './data/prod_forecast.xlsx'
     forecast_get = pd.read_excel(
-        forecast_gdrive, sheet_name='Production Forecast', header=0)
+        forecast_gdrive, sheet_name='OrderList', header=0)
     forecast_get = forecast_get.loc[:, 'CPN':'Qty']
     forecast_pns = forecast_get['CPN'].drop_duplicates().reset_index(drop=True)
     forecast_grouped = forecast_get.groupby(
@@ -193,7 +176,7 @@ def main():
         logging.debug(forecast)
 
         # ASSIGNING PN TO QUERY AND RUNNING FUNCTION TO BUILD DURO BOM
-        durobom = oxrest.s2sbuildbom(duroid, durocreds)
+        durobom = ds.s2sbuildbom(duroid, durocreds)
         # SAVING DURO MPN INFO TO DF FOR LATER
         if len(mpn) == 0:
             mpn = durobom
@@ -208,9 +191,9 @@ def main():
 
     # mpn = durobom
     mpn = mpn.set_index(['cpn'])
-    mpn = oxrest.unpack(mpn['sources.manufacturers'])
+    mpn = ds.unpack(mpn['sources.manufacturers'])
     mpn = pd.concat([mpn.reset_index(drop=False),
-                    oxrest.unpack(mpn['mpn'])], axis=1)
+                    ds.unpack(mpn['mpn'])], axis=1)
     # mpn = mpn[['ind', 'key']].rename(
     mpn = mpn[['ind', 'key', 'name']].rename(
         columns={'ind': 'cpn', 'key': 'mpn', 'name': 'manf_name'}).drop_duplicates()
@@ -234,20 +217,6 @@ def main():
     durobom_forecast.to_csv(csv, index=False)
     hash1 = pd.util.hash_pandas_object(durobom_forecast).sum()
     logging.debug(str(hash1) + " - durobom_forecast hash")
-
-    # atcreds = allcreds['oxide_airtable_opsextbom']
-    # rec_ids = oxrest.atblget(atcreds)
-    # if rec_ids.size > 0:
-    #     rec_ids = rec_ids['id'].tolist()
-    #     rec_ids = Table(atcreds['api_key'],
-    #                     atcreds['base_id'],
-    #                     atcreds['table_name']).batch_delete(rec_ids)
-
-    # durobom_upload = durobom_forecast.to_dict(orient='records')
-    # oxrest.atblcreate(atcreds, durobom_upload)
-
-    # durobomid = '913-0000004'
-    # durobombom = buildbom(durobomid)
 
     logging.info("FINISH COMBINING PN QUERIES AND PUSHING TO AIRTABLE")
 
@@ -297,13 +266,13 @@ def main():
     """
     logging.info("START UNPACKING QUOTE AND LT INFO FROM DURO BOM")
     # UNPACK NESTED DICT SOURCES.MANUFACTURERS AND RESET INDEX
-    manf = oxrest.unpack(
+    manf = ds.unpack(
         manf_cpn['sources.manufacturers']).reset_index(drop=False)
-    # lt = oxrest.unpack(manf['lead_time'])
+    # lt = ds.unpack(manf['lead_time'])
     # UNPACK DISTRIBUTORS COL AND RESET INDEX
-    dst = oxrest.unpack(manf['distributors']).reset_index(drop=False)
+    dst = ds.unpack(manf['distributors']).reset_index(drop=False)
     # UNPACK QUOTES COL, STRIP OUT ALL 1 PIECE QUOTES AND CHANGE TYPE TO INT
-    qts = oxrest.unpack(dst['quotes'])
+    qts = ds.unpack(dst['quotes'])
     qts = qts[qts['minQuantity'] > 1]
     qts['minQuantity'] = qts['minQuantity'].astype(int)
     # RENAME IND COL TO CPN, RESET AND KEEP INDEX, AND RENAME MANFIND
@@ -318,7 +287,7 @@ def main():
                                                       'ind': 'manf_ind',
                                                       'name': 'dst_name',
                                                       'description': 'dst_desc'})
-    pkg = oxrest.unpack(dst['package'])
+    pkg = ds.unpack(dst['package'])
     dst = pd.concat([dst, pkg],
                     axis=1)
     # QTS IND COL IS KEY BACK TO DST INDEX COL
@@ -330,7 +299,7 @@ def main():
     srcs = srcs.merge(qts, 'left', 'dst_ind')
     # DROP NULL ROWS MISSING DST AND QTS INFO
     srcs = srcs[srcs['min_qty'].notnull()].reset_index(drop=True)
-    lt = oxrest.unpack(srcs['leadTime_y'])
+    lt = ds.unpack(srcs['leadTime_y'])
     srcs = pd.concat([srcs, lt],
                      axis=1)
 
@@ -359,6 +328,7 @@ def main():
 
     # MERGING MPN KEY AND PROCUREMENT DATA INTO ONE DF
     mpn['mpn'] = mpn['mpn'].str.lower()
+    mpn = mpn.drop_duplicates()
     proc['proc_mpn'] = proc['proc_mpn'].astype(str).str.lower()
     mpn_proc = mpn.merge(proc, 'left', left_on='mpn', right_on='proc_mpn')
     mpn_proc['mpn'] = mpn_proc['mpn'].fillna('-')
@@ -386,7 +356,6 @@ def main():
     durobom_forecast_mpn_proc = durobom_forecast.merge(mpn_proc,
                                                        'left',
                                                        'cpn')
-    reports = './data/'
     csv = histup + 'durobom_forecast_mpn_proc' + \
         time.strftime("%Y-%m-%d-%H%M%S") + '.xlsx'
     durobom_forecast_mpn_proc.to_excel(csv, index=False)
@@ -412,6 +381,8 @@ def main():
     # OUT ANY BUY PARTS OVER 9910000000 AND DROP THE REST
     comps_forecast = durobom_forecast
     comps_forecast['cpn_int'] = comps_forecast['cpn'].str.replace('-','').astype(int)
+    comps_forecast = comps_forecast.loc[(comps_forecast['procurement']=='Buy') |
+                                        (~comps_forecast['category'].str.contains("Miscellaneous"))]
     comps_forecast = comps_forecast.loc[(comps_forecast['procurement']=='Buy') |
                                         (comps_forecast['cpn_int']<9910000000)]
     # ALSO WANT TO DROP PCBAS THAT AREN'T PURCHASED
@@ -484,6 +455,9 @@ def main():
     cols = cols_to_move + \
         [col for col in comps_forecast_mpn_proc.columns if col not in cols_to_move]
     comps_forecast_mpn_proc = comps_forecast_mpn_proc[cols]
+
+    # TO COMPUTE THE BUY QTY WE US APPLY AND SUBTRACT THE TOTAL PURCHASED FROM
+    # THE FORECASTED TOTAL WHERE FORECAST IS GREATER THAN WHAT WE'VE PURCHASED
     comps_forecast_mpn_proc['buy_qty'] = comps_forecast_mpn_proc.apply(
         lambda x: x['forecast_total'] - x['total_qty'] if x['forecast_total'] > x['total_qty'] else 0, axis=1)
 
@@ -491,32 +465,47 @@ def main():
         time.strftime("%Y%m%d-%H%M%S") + '.xlsx'
     comps_forecast_mpn_proc.to_excel(csv, index=False)
 
+    # In[THIS SECTION BUILDS THE BUY QTY DF]
+    # WE WANT TO PULL SOURCING DATA FROM DURO FOR QTYS ABOVE AND BELOW OUR 
+    # IDENTIFIED BUY QTY
     buyqty = comps_forecast_mpn_proc[['cpn', 'name', 'buy_qty']]
     buyqty = buyqty.merge(srcs, 'left', 'cpn')
+    # THE ORDER RATIO HELPS US IDENTIFY WHICH MOQS ARE NEAREST OUR
+    # BUY QTY
     buyqty['ord_ratio'] = buyqty.apply(
         lambda x: x['buy_qty']/x['min_qty'], axis=1)
     buyqty = buyqty[buyqty['buy_qty'] != 0]
+    # ONE PRICE WE WANT IS FOR ORDERS MORE THAN OUR NEED
+    # MOQ > NEED IS SMALLEST ORDER RATIO GREATER THAN 1
     buyqty_high = buyqty[buyqty['ord_ratio'] < 1]
     buyqty_high = buyqty_high[['cpn', 'ord_ratio']].groupby(
         ['cpn'], as_index=False).agg(max)
+    # THE OTHER PRICE WE WANT IS FOR ORDERS LESS THAN OUR NEED
+    # MOQ < NEED IS LARGEST ORDER RATIO LESS THAN 1
     buyqty_low = buyqty[buyqty['ord_ratio'] > 1]
     buyqty_low = buyqty_low[['cpn', 'ord_ratio']].groupby(
         ['cpn'], as_index=False).agg(min)
     buys = [buyqty, buyqty_high, buyqty_low]
+    # CREATE A KEY TO JOIN ON THE buyqty DF AND IDENTIFY WHICH MOQS WE WANT TO KEEP
     for df in buys:
         df['key'] = ''
         df['key'] = df.apply(lambda x: x['cpn'] + str(x['ord_ratio']), axis=1)
 
+    # ADDING AN INDICATOR COLUMN TO SORT ON
     buyqty_high['high_low'] = 'MOQ>NEED'
     buyqty_low['high_low'] = 'NEED>MOQ'
+
+    # MERGING IN KEYS FOR LOW AND HIGH
     buyqty_high = buyqty_high[['key', 'high_low']]
     buyqty_low = buyqty_low[['key', 'high_low']]
     buyqty_low = buyqty_low.append(buyqty_high)
     buyqty = buyqty.merge(buyqty_low, 'left', 'key')
-    # buyqty = buyqty.loc[(buyqty['manf_name'].isnull()) |
-    #                     (buyqty['high_low'].notnull())]
+
+    # REDUCING THE DF TO KEEP ONLY THE MOQS WE WANT
     buyqty = buyqty.loc[(buyqty['high_low'].notnull())]
     # buyqty = buyqty.sort_values(by=['cpn'], ascending=True)
+
+    # CLEANING UP THE DF
     buyqtyind = buyqty[['cpn', 'key']].copy()
     buyqtyind['sourcing_info'] = 'Yes'
     buyqtyind = buyqtyind.drop(columns=['key']).drop_duplicates()
@@ -529,41 +518,56 @@ def main():
     logging.debug("comps_forecast_mpn_proc hash value = "+str(hash1))
     logging.debug(hash1)
 
+    # In[HERE IS WHERE WE SPLIT THE COMPONENTS BY ELECTRICAL AND MECHANICAL]
+    # WE START BY REFERENCING A DURO CATEGORY FILE SAVED LOCALLY
+    # THIS FILE WILL NEED UPDATING IF DURO MAKES UPDATES ON OUR BEHALF
     elec = pd.read_csv("./DURO-CATEGORY-REFERENCES.csv")
     elec = elec[elec['Category'] ==
                 "-- ELECTRICAL --"].drop(columns=['Category'])
+
+    # THE NEXT 3 LINES ADD CATEGORIES TO THE ELECTRICAL DF THAT AREN'T
+    # IN DURO - THIS GETS FANS AND HEATSINKS TO THE ELECTRICAL DF FOR TRACKING
+    assys = ['Fan', 'Cable Assembly', 'Heatsink']
+    assys = pd.DataFrame(assys, columns=['Value'])
+    elec = elec.append(assys)
 
     elec_comps_forecast_mpn_proc = comps_forecast_mpn_proc[comps_forecast_mpn_proc['category'].isin(
         elec['Value'])]
     mech_comps_forecast_mpn_proc = comps_forecast_mpn_proc[~comps_forecast_mpn_proc['category'].isin(
         elec['Value'])]
 
-    old_cf = './data/old_comp_forecast.xlsx'
-    old_cf_get = pd.read_excel(old_cf,
+    # NEW SECTION FOR COPYING NOTES OVER USING CTB TAB
+    # PULL CTB NOTES, THEN CF NOTES, APPEND CF TO CTB AND DROP DUPS KEEP FIRST
+    old_notes = './data/old_comp_forecast.xlsx'
+    old_ctb_get = pd.read_excel(old_notes,
+                             sheet_name='ClearToBuild',
+                             header=0)
+    old_cf_get = pd.read_excel(old_notes,
                              sheet_name='Elec.Component.Analysis',
                              header=0)
-    old_cf = old_cf_get[['cpn', 'Notes']]
-    elec_comps_forecast_mpn_proc = elec_comps_forecast_mpn_proc.merge(old_cf, 'left', 'cpn')
+    old_notes = old_ctb_get[['cpn', 'Notes']].append(old_cf_get[['cpn', 'Notes']])
+    old_notes = old_notes.drop_duplicates(subset=['cpn'], keep='first')#(keep='first')
+    elec_comps_forecast_mpn_proc = elec_comps_forecast_mpn_proc.merge(old_notes, 'left', 'cpn')
 
+    # THIS IS THE NEW CLEAR TO BUILD DF
+    ctb = elec_comps_forecast_mpn_proc.loc[(elec_comps_forecast_mpn_proc['lot4_ok']=='No')]
     # In[CREATE AND NAME XLS MULTI-WORKSHEET FILE]
     # CREATE AND NAME XLS MULTI-WORKSHEET FILE
-    csv = reports + 'Component_Forecast_Analysis.xlsx'
+    uploads = './uploads/'
+    csv = uploads + 'Component_Forecast_Analysis.xlsx'
     writer = pd.ExcelWriter(csv, engine='xlsxwriter')
 
     # Write each dataframe to a different worksheet.
+    ctb.to_excel(writer, sheet_name='ClearToBuild')
     elec_comps_forecast_mpn_proc.to_excel(
         writer, sheet_name='Elec.Component.Analysis')
     mech_comps_forecast_mpn_proc.to_excel(
         writer, sheet_name='Mech.Component.Analysis')
     buyqty.to_excel(writer, sheet_name='DuroSourcingOptions', index=False)
-    # bldphase = {'evt1': 1,
-    #             'evt2': 2,
-    #             'dvt': 3,
-    #             'pvt': 4,
-    #             'lot1': 5,
-    #             'lot2': 6,
-    #             'lot3': 7,
-    #             'lot4': 8}
+
+    # THIS SECTION CREATES THE DEMAND FORECAST AND PLANNING PN DFS
+    # THIS HELPS RETAIN WHAT DEMAND FORECAST AND PLANNING PNS WERE USED TO
+    # GENERATE THE REPORT
     pldmnd = forecast_grouped_pvt.join(
         pd.DataFrame.from_dict(bldphase, orient='index'))
     pldmnd = pldmnd.sort_values(by=[0]).reset_index(
@@ -593,7 +597,7 @@ def main():
     logging.info(nd-st)
     return comps_forecast_mpn_proc, srcs, manf
 
-
+# In[__name__ == __main__]
 if __name__ == '__main__':
     requests.packages.urllib3.disable_warnings()
     with open("./config.yml", 'r') as stream:
@@ -603,26 +607,37 @@ if __name__ == '__main__':
     logging.basicConfig(filename=('./gitlogs/compforecast' + time.strftime("%Y-%m-%d") + '.log'),
                         level=loglvl,
                         format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
-    # logger = logging.getLogger(__name__)
-    # logger.setLevel(logging.DEBUG)
-    # formatter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s | %(message)s')
-    # file_handler = logging.FileHandler('/Volumes/GoogleDrive/Shared drives/Docs/Operations/OpsAutomation/logs/test/compforecast' + time.strftime("%Y-%m-%d") + '.log')
-    # # file_handler = logging.FileHandler('/Volumes/GoogleDrive/Shared drives/Docs/Operations/OpsAutomation/logs/test/stdcost.log')
-    # file_handler.setFormatter(formatter)
-    # file_handler.setLevel(logging.INFO)
-    # stream_handler = logging.StreamHandler()
-    # stream_handler.setFormatter(formatter)
-    # logger.addHandler(file_handler)
-    # logger.addHandler(stream_handler)
-    # bldphase = {'evt1': 1,
-    #             'evt2': 2,
-    #             'dvt': 3,
-    #             'pvt': 4,
-    #             'lot1': 5,
-    #             'lot2': 6,
-    #             'lot3': 7,
-    #             'lot4': 8}
-    # prod_lots = list(bldphase.keys())
+
     logging.info("START compforecast.py __main__ HERE")
-    cfmp, sources, manf_names = main()
+
+    desc_string = 'This utility builds the Ops Component Forecast Analsyis.' \
+    ' It combines Duro BOM, GDrive Inventory, and GDrive Forecast info to ' \
+    'calculate required component quantities for forecasted demand. It ' \
+    'produces the Clear To Build report stored at GDrive > OpsAuto > Reports'
+    epilog_string = ''
+
+    parser = argparse.ArgumentParser(description=desc_string,
+                                     epilog=epilog_string,
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    # run_type = parser.add_mutually_exclusive_group(required=True)
+    parser.add_argument('-a', '--api_key',
+                        action='store',
+                        dest='API',
+                        help='api_key required to query Duro')
+
+    args = parser.parse_args()
+
+
+    # BEFORE BEGINNING BLOCK 1 > DELETE FILES IN ECO UPDATE GDRIVE FOLDER
+    if args.API:
+        print('run parameter is api = %s' % str(args.API))
+        cfmp, sources, manf_names = main(args.API)
+        
+    else:
+        print("NO CLI Input")
+        with open("./creds.yml", 'r') as crstream:
+            allcreds = yaml.safe_load(crstream)
+        cfmp, sources, manf_names = main(allcreds['oxide_duro']['api_key'])
+        
     logging.info("FINISH compforecast.py __main__ HERE")
