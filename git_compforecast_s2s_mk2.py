@@ -38,8 +38,7 @@ import ds_utils as ds
 BUILD BOM FUNCTION <= MOVED TO RESTAPI TO USE IN OTHER SCRIPTS
 """
 
-bldphase = {'evt1': 1,
-            'evt2': 2,
+bldphase = {'evt': 1,
             'dvt': 3,
             'pvt': 4,
             'lot1': 5,
@@ -53,6 +52,7 @@ prod_lots = list(bldphase.keys())
 FORECAST LOOP FOR DIFFERENT PRODUCTION PHASES
 """
 
+
 def prodsched(oxforecast, oxbom):
     """
 
@@ -65,19 +65,24 @@ def prodsched(oxforecast, oxbom):
 
     Returns
     -------
-    duroext : DATAFRAME
+    oxbom : DATAFRAME
         THIS FUNCTION RETURNS A DATAFRAME WITH EXTENDED BOM QUANTITIES.
 
     """
-    logging.info("START FORECAST LOOP FOR DIFFERENT PRODUCTION PHASES")
-    forecast = oxforecast
-    duroext = oxbom
-    for x in range(len(forecast['key'])):
-        logging.debug(forecast.at[x, 'key'])
-        duroext[forecast.at[x, 'key']] = [
-            forecast.at[x, 'volume'] * i for i in duroext['ext_qty']]
+    logging.info("START FORECAST LOOP FOR QUERY PN %s" % oxbom.at[0, 'cpn'])
+    # oxforecast = forecast.iloc[0:1,:]
+    # oxbom = durobom
+    for x in range(len(oxforecast['key'])):
+        logging.debug(oxforecast.at[x, 'key'])
+        oxbom[oxforecast.at[x, 'key']] = [
+            oxforecast.at[x, 'volume'] * i for i in oxbom['ext_qty']]
 
-    duroext['forecast_total'] = duroext[prod_lots].sum(axis=1)
+    oxbom['evt'] = 0
+    oxbom['evt'] = oxbom['evt'].astype(float)
+    oxbom['dvt'] = 0
+    oxbom['dvt'] = oxbom['dvt'].astype(float)
+
+    oxbom['forecast_total'] = oxbom[prod_lots].sum(axis=1)
 
     cols_to_move = ['query_pn',
                     'parent',
@@ -91,25 +96,26 @@ def prodsched(oxforecast, oxbom):
                     'forecast_total',
                     'lead_time',
                     'lt_units']
-    
+
     cols_to_move[9:9] = prod_lots
 
     cols = cols_to_move + \
-        [col for col in duroext.columns if col not in cols_to_move]
-    duroext = duroext[cols]
-    duroext['lead_time'] = duroext['lead_time'].fillna(0)
-    duroext['lt_units'] = duroext['lt_units'].fillna("0")
-    logging.info("FINISH FORECAST LOOP FOR DIFFERENT PRODUCTION PHASES")
-    return duroext
+        [col for col in oxbom.columns if col not in cols_to_move]
+    oxbom = oxbom[cols]
+    oxbom['lead_time'] = oxbom['lead_time'].fillna(0)
+    oxbom['lt_units'] = oxbom['lt_units'].fillna("0")
+    logging.info("FINISH FORECAST LOOP FOR QUERY PN %s" % oxbom.at[0, 'cpn'])
+    return oxbom
 
 # In[MAIN FUNCTION]
+
 
 def main(api_key):
     """
 
     Returns
     -------
-    comps_forecast_mpn_proc : DATAFRAME
+    comps_forecast_mpn_inv : DATAFRAME
         COMPONENT FORECAST WITH DURO, THE PRODUCTION FORECAST, AND THE
         PROCUREMENT TRACKER AS SOURCES OF INFORMATION
     srcs : DATAFRAME
@@ -119,21 +125,9 @@ def main(api_key):
         MANUFACTURER NAME INFORMATION FROM OCTOPART FOR EASY REFERENCE
 
     """
+    api_key = allcreds['oxide_duro']['api_key'] #FOR DEBUG
     st = dt.datetime.now()
     histup = './data/'
-    durocreds = api_key
-
-    # if len(sys.argv) > 1:
-    #     durocreds = sys.argv[1]
-    #     print("CLI Input Provided")
-    # else:
-    #     with open("./creds.yml", 'r') as stream:
-    #         allcreds = yaml.safe_load(stream)
-    #     durocreds = allcreds['oxide_duro']
-    #     durocreds = durocreds['api_key']
-    #     print("NO CLI Input")
-
-
 
     # In[FORECAST DATA PULLED FROM GDRIVE]
     """
@@ -143,16 +137,36 @@ def main(api_key):
     logging.info("START FORECAST DATA PULLED FROM GDRIVE")
 
     # forecast_gdrive = '/Volumes/GoogleDrive/Shared drives/Docs/Operations/Production Forecast/Oxide Production Forecast.xlsx'
-    forecast_gdrive = './data/prod_forecast.xlsx'
-    forecast_get = pd.read_excel(
-        forecast_gdrive, sheet_name='OrderList', header=0)
-    forecast_get = forecast_get.loc[:, 'CPN':'Qty']
-    forecast_pns = forecast_get['CPN'].drop_duplicates().reset_index(drop=True)
-    forecast_grouped = forecast_get.groupby(
-        ['CPN', 'Build Phase']).agg('sum').reset_index(drop=False)
-    forecast_grouped_pvt = forecast_grouped.pivot(index='Build Phase',
-                                                  columns='CPN',
-                                                  values='Qty').fillna(0)
+    # forecast_gdrive = './data/prod_forecast.xlsx'
+    # forecast_get = pd.read_excel(
+    #     forecast_gdrive, sheet_name='OrderList', header=0)
+    # forecast_get = forecast_get.loc[:, 'CPN':'Qty']
+    # forecast_pns = forecast_get['CPN'].drop_duplicates().reset_index(drop=True)
+    # forecast_grouped = forecast_get.groupby(
+    #     ['CPN', 'Build Phase']).agg('sum').reset_index(drop=False)
+    # forecast_grouped_pvt = forecast_grouped.pivot(index='Build Phase',
+    #                                               columns='CPN',
+    #                                               values='Qty').fillna(0)
+
+    mps_path = './data/mps.xlsx'
+    mps = pd.read_excel(mps_path, sheet_name='Master Schedule', header=4)
+    mps = ds.clean_mps(mps)
+    mps = mps[mps['lot_num'] != 'planning fence']
+    mps['qty'] = mps['qty'].astype(int)
+    mps = mps.rename(columns={'lot_num': 'Build Phase'})
+    mps_pns = mps['cpn'].drop_duplicates().reset_index(drop=True)
+    for value in prod_lots:
+        logging.debug(str(value) + ' prod lot')
+        data = ['999-0000001', 0, 0, 0, value, 1]
+        logging.debug(str(data) + ' data for production lot')
+        mps = mps.append(pd.DataFrame([data], columns=mps.columns))
+
+    mps = mps.groupby(['Build Phase', 'cpn']).agg(sum)
+    mps_tbl = mps.pivot_table(index=["Build Phase"],
+                              columns=["cpn"],
+                              values="qty")
+    mps_tbl = mps_tbl.fillna(0)
+    mps_tbl = mps_tbl.drop(['999-0000001'], axis=1)
 
     logging.info("FINISH FORECAST DATA PULLED FROM GDRIVE")
 
@@ -165,18 +179,16 @@ def main(api_key):
 
     durobom_forecast = []
     mpn = []
-    for pns in forecast_pns:
+    for pns in mps_pns:
         logging.debug(pns)
-        duroid = pns
-        forecast_grouped_pn = forecast_grouped_pvt[[
-            duroid]].reset_index(drop=False)
-        # forecast_grouped_pn = forecast_grouped_pn.drop(columns=['CPN']).reset_index(drop=True)
-        forecast_grouped_pn.columns = ['key', 'volume']
-        forecast = forecast_grouped_pn
-        logging.debug(forecast)
+        # duroid = pns
+        mps_grouped_pn = mps_tbl[[pns]].reset_index(drop=False)
+        # mps_grouped_pn = mps_grouped_pn.drop(columns=['CPN']).reset_index(drop=True)
+        mps_grouped_pn.columns = ['key', 'volume']
+        logging.debug(mps_grouped_pn)
 
         # ASSIGNING PN TO QUERY AND RUNNING FUNCTION TO BUILD DURO BOM
-        durobom = ds.s2sbuildbom(duroid, durocreds)
+        durobom = ds.s2sbuildbom_all(pns, api_key)
         # SAVING DURO MPN INFO TO DF FOR LATER
         if len(mpn) == 0:
             mpn = durobom
@@ -184,16 +196,18 @@ def main(api_key):
             mpn = mpn.append(durobom)
         # RUNNING PRODUCTION SCHEDULE FUNCTION TO GET FULL BOM FORECAST
         if len(durobom_forecast) == 0:
-            durobom_forecast = prodsched(forecast, durobom)
+            durobom_forecast = prodsched(mps_grouped_pn, durobom)
+            logging.debug(durobom_forecast)
         else:
             durobom_forecast = durobom_forecast.append(
-                prodsched(forecast, durobom))
+                prodsched(mps_grouped_pn, durobom))
+            logging.debug(durobom_forecast)
     cols_to_move = ['query_pn',
                     'parent',
                     'cpn',
                     'name',
                     'pnladder']
-    
+
     cols = cols_to_move + \
         [col for col in durobom_forecast.columns if col not in cols_to_move]
     durobom_forecast = durobom_forecast[cols]
@@ -217,7 +231,7 @@ def main(api_key):
     """
 
     logging.info("START COMBINING PN QUERIES AND PUSHING TO AIRTABLE")
-    
+
     durobom_forecast = durobom_forecast.loc[:, 'query_pn':'lt_units']
     cols_to_move = ['query_pn',
                     'parent',
@@ -246,35 +260,86 @@ def main(api_key):
     # WITHOUT A UNIT COST SO THEY WON'T IMPACT THE STANDARD COST WHEN AVERAGED
     logging.info("START PULLING PROCUREMENT TRACKER FROM GDRIVE")
 
-    # proc_gdrive = '/Volumes/GoogleDrive/Shared drives/Oxide Benchmark Shared/Benchmark Procurement/On Hand Inventory/Oxide Inv Receipts and Inv Tracker at Benchmark (Rochester).xlsx'
-    proc_gdrive = './data/ox_bm_inv_shared.xlsx'
-    proc_get = pd.read_excel(proc_gdrive,
-                             sheet_name='Oxide Inventory Receipts',
-                             header=0)
-    proc_get['Manufacturer P/N'] = proc_get['Manufacturer P/N'].astype(
-        str).str.strip()
+    # # proc_gdrive = '/Volumes/GoogleDrive/Shared drives/Oxide Benchmark Shared/Benchmark Procurement/On Hand Inventory/Oxide Inv Receipts and Inv Tracker at Benchmark (Rochester).xlsx'
+    # proc_gdrive = './data/ox_bm_inv_shared.xlsx'
+    # proc_get = pd.read_excel(proc_gdrive,
+    #                          sheet_name='Oxide Inventory Receipts',
+    #                          header=0)
+    # proc_get['Manufacturer P/N'] = proc_get['Manufacturer P/N'].astype(
+    #     str).str.strip()
 
-    proc_get['Oxide Received Inventory @ Benchmark'] = proc_get['Oxide Received Inventory @ Benchmark'].fillna(
-        0)
-    proc_get['Emeryville & Other Oxide Inventory'] = proc_get['Emeryville & Other Oxide Inventory'].fillna(
-        0)
-    proc_get['Benchmark Owned Inventory'] = proc_get['Benchmark Owned Inventory'].fillna(
-        0)
-    proc_get['on_hand'] = proc_get.apply(lambda x: x['Oxide Received Inventory @ Benchmark'] +
-                                        x['Benchmark Owned Inventory'] + x['Emeryville & Other Oxide Inventory'], axis=1)
+    # proc_get['Oxide Received Inventory @ Benchmark'] = proc_get['Oxide Received Inventory @ Benchmark'].fillna(
+    #     0)
+    # proc_get['Emeryville & Other Oxide Inventory'] = proc_get['Emeryville & Other Oxide Inventory'].fillna(
+    #     0)
+    # proc_get['Benchmark Owned Inventory'] = proc_get['Benchmark Owned Inventory'].fillna(
+    #     0)
+    # proc_get['on_hand'] = proc_get.apply(lambda x: x['Oxide Received Inventory @ Benchmark'] +
+    #                                     x['Benchmark Owned Inventory'] + x['Emeryville & Other Oxide Inventory'], axis=1)
 
-    proc_total = proc_get.groupby(
-        ['Manufacturer P/N']).agg('sum').reset_index()
-    cols = ['Manufacturer P/N',
-            # 'Oxide Received Inventory @ Benchmark',
-            'on_hand',
-            'Order Qty To Go (Calculated)',
-            'Qty Ordered']
-    proc = proc_total[cols]
-    proc = proc.rename(columns={'Manufacturer P/N': 'proc_mpn',
-                                'Qty Ordered': 'total_qty',
-                                # 'Oxide Received Inventory @ Benchmark': 'on_hand' ,
-                                'Order Qty To Go (Calculated)': 'open_orders'})
+    # proc_total = proc_get.groupby(
+    #     ['Manufacturer P/N']).agg('sum').reset_index()
+    # cols = ['Manufacturer P/N',
+    #         # 'Oxide Received Inventory @ Benchmark',
+    #         'on_hand',
+    #         'Order Qty To Go (Calculated)',
+    #         'Qty Ordered']
+    # proc = proc_total[cols]
+    # proc = proc.rename(columns={'Manufacturer P/N': 'proc_mpn',
+    #                             'Qty Ordered': 'total_qty',
+    #                             # 'Oxide Received Inventory @ Benchmark': 'on_hand' ,
+    #                             'Order Qty To Go (Calculated)': 'open_orders'})
+
+    # CAN'T USE stdcost.py BECAUSE THAT FILE FILTERS OUT PROCUREMENT TRACKER RECORDS
+    # WITHOUT A UNIT COST SO THEY WON'T IMPACT THE STANDARD COST WHEN AVERAGED
+    logging.info("START PULLING INVENTORY REPORTS FROM GDRIVE")
+
+    inv_gdrive = './data/ox_prod_inv.xlsx'
+    open_po_get = pd.read_excel(inv_gdrive,
+                                sheet_name='Open PO',
+                                header=1)
+
+    on_hand_get = pd.read_excel(inv_gdrive,
+                                sheet_name='Inventory on hand',
+                                header=1)
+
+    open_po = open_po_get[['Part Number', 'Order', 'Seq', 'Quantity']].copy()
+    open_po['open_orders'] = open_po.apply(
+        lambda x: x['Seq'] + x['Quantity'], axis=1)
+    open_po = open_po.groupby(by=['Part Number']).agg(sum)
+    open_po = open_po.drop(columns=['Seq', 'Quantity'])
+    # open_po = open_po.rename(columns={'Part Number':'cpn'})
+
+    on_hand = on_hand_get[['Part', 'Description', 'Quantity']].copy()
+    on_hand['Part'] = on_hand['Part'].map(lambda x: x.replace('OXC', ''))
+    on_hand['cpn'] = on_hand['Part'].map(lambda x: x[:11])
+    # on_hand = on_hand.groupby(by=['cpn']).agg(sum)
+    # TEMPORARY UNTIL ENGINEERING INVENTORY IS MOVED TO PRODUCTION
+    # REMOVE HERE DOWN
+    on_hand = on_hand.groupby(by=['cpn'], as_index=False).agg(sum)
+    on_hand = on_hand.rename(columns={'Quantity': 'on_hand'})
+
+    eng_gdrive = './data/ox_eng_inv.xlsx'
+    eng_oh_get = pd.read_excel(eng_gdrive,
+                               sheet_name='Summary',
+                               header=0)
+    eng_oh = eng_oh_get.copy()
+    eng_oh['cpn'] = eng_oh['cpn'].fillna('-')
+    eng_oh = eng_oh[eng_oh['cpn'] != '-']
+    eng_oh = eng_oh.groupby(by=['cpn'], as_index=False).agg(sum)
+    eng_oh = eng_oh.rename(columns={'total_qty': 'on_hand'})
+
+    on_hand = pd.concat((on_hand, eng_oh)).reset_index(drop=True)
+    on_hand = on_hand.groupby(by=['cpn']).agg(sum)
+    # REMOVE HERE UP
+
+    inv = pd.concat((open_po, on_hand), axis=1)
+
+    inv = inv.reset_index(drop=False)
+    inv = inv.fillna(0)
+    inv = inv.rename(columns={'Quantity': 'on_hand', 'index': 'cpn'})
+    inv['total_qty'] = inv.apply(
+        lambda x: x['open_orders'] + x['on_hand'], axis=1)
 
     logging.info("FINISH PULLING PROCUREMENT TRACKER FROM GDRIVE")
 
@@ -311,8 +376,8 @@ def main(api_key):
     # QTS IND COL IS KEY BACK TO DST INDEX COL
     # RENAME IND COL TO DSTIND, RESET INDEX
     qts = qts.reset_index(drop=False).rename(columns={'ind': 'dst_ind',
-                                                      'minQuantity':'min_qty',
-                                                      'unitPrice':'unit_price'})
+                                                      'minQuantity': 'min_qty',
+                                                      'unitPrice': 'unit_price'})
     srcs = manf.merge(dst, 'left', 'manf_ind')
     srcs = srcs.merge(qts, 'left', 'dst_ind')
     # DROP NULL ROWS MISSING DST AND QTS INFO
@@ -347,22 +412,23 @@ def main(api_key):
     # MERGING MPN KEY AND PROCUREMENT DATA INTO ONE DF
     mpn['mpn'] = mpn['mpn'].str.lower()
     mpn = mpn.drop_duplicates()
-    proc['proc_mpn'] = proc['proc_mpn'].astype(str).str.lower()
-    mpn_proc = mpn.merge(proc, 'left', left_on='mpn', right_on='proc_mpn')
-    mpn_proc['mpn'] = mpn_proc['mpn'].fillna('-')
-    mpn_proc['proc_mpn'] = mpn_proc['proc_mpn'].fillna('-')
-    mpn_proc = mpn_proc.fillna(0)
+    # inv['inv_mpn'] = inv['inv_mpn'].astype(str).str.lower()
+    mpn_inv = inv.merge(mpn, 'left', 'cpn')
+    mpn_inv['mpn'] = mpn_inv['mpn'].fillna('-')
+    mpn_inv['manf_name'] = mpn_inv['manf_name'].fillna('-')
+    mpn_inv['on_hand'] = mpn_inv['on_hand'].astype(float)
+    mpn_inv = mpn_inv.fillna(0)
     # GROUP ENTRIES BY MPN AND SUM REQUIRED QUANTITIES
     # WHILE FLATTENING STRINGS TO A SINGLE ENTRY PER CPN
-    mpn_proc = mpn_proc.groupby(['cpn'], as_index=False).agg(
+    mpn_inv = mpn_inv.groupby(['cpn'], as_index=False).agg(
         lambda x: x.sum() if x.dtype == 'float64' else ', '.join(x))
-    mpn_proc['mpn'] = mpn_proc['mpn'].str.upper()
-    mpn_proc['proc_mpn'] = mpn_proc['proc_mpn'].str.upper()
+    mpn_inv['mpn'] = mpn_inv['mpn'].str.upper()
+    # mpn_inv['inv_mpn'] = mpn_inv['inv_mpn'].str.upper()
 
-    csv = histup + 'mpn_proc' + time.strftime("%Y%m%d-%H%M%S") + '.xlsx'
-    mpn_proc.to_excel(csv, index=False)
+    csv = histup + 'mpn_inv' + time.strftime("%Y%m%d-%H%M%S") + '.xlsx'
+    mpn_inv.to_excel(csv, index=False)
 
-    logging.info("FINISH MERGING MPN AND PROC DATA INTO DF")
+    logging.info("FINISH MERGING MPN AND inv DATA INTO DF")
 
     # In[MERGE CPN, MPN, PROC AND MERGE TO BOM]
     """
@@ -371,15 +437,15 @@ def main(api_key):
 
     logging.info("START MERGE CPN, MPN, PROC AND MERGE TO BOM")
     # DOESNT WORK WITHOUT SOME CPN TO MPN DECODER RING
-    durobom_forecast_mpn_proc = durobom_forecast.merge(mpn_proc,
-                                                       'left',
-                                                       'cpn')
-    csv = histup + 'durobom_forecast_mpn_proc' + \
+    durobom_forecast_mpn_inv = durobom_forecast.merge(mpn_inv,
+                                                      'left',
+                                                      'cpn')
+    csv = histup + 'durobom_forecast_mpn_inv' + \
         time.strftime("%Y-%m-%d-%H%M%S") + '.xlsx'
-    durobom_forecast_mpn_proc.to_excel(csv, index=False)
-    hash1 = pd.util.hash_pandas_object(durobom_forecast_mpn_proc).sum()
+    durobom_forecast_mpn_inv.to_excel(csv, index=False)
+    hash1 = pd.util.hash_pandas_object(durobom_forecast_mpn_inv).sum()
     logging.debug(hash1)
-    logging.debug(str(hash1) + " = durobom_forecast_mpn_proc hash")
+    logging.debug(str(hash1) + " = durobom_forecast_mpn_inv hash")
 
     logging.info("FINISH MERGE CPN, MPN, PROC AND MERGE TO BOM")
 
@@ -391,31 +457,31 @@ def main(api_key):
     logging.info(
         "START REMOVING ASSEMBLIES AND GROUPING DATA BY COMPONENT PN")
 
-
     # ASSEMBLIES AND BOMS ARE REMOVED FROM DF
     # FILTERING OUT ASSEMBLIES - MOST WILL END UP BEING MAKE PARTS BUT WE WANT
     # TO TRACK CABLE ASSEMBLIES AND ANY BUY PARTS
-    # ALL SUB ASSEMBLIES ARE 991 AND GREATER SO TURN CPN INTO AN INT AND FILTER 
+    # ALL SUB ASSEMBLIES ARE 991 AND GREATER SO TURN CPN INTO AN INT AND FILTER
     # OUT ANY BUY PARTS OVER 9910000000 AND DROP THE REST
     comps_forecast = durobom_forecast
-    comps_forecast['cpn_int'] = comps_forecast['cpn'].str.replace('-','').astype(int)
-    comps_forecast = comps_forecast.loc[(comps_forecast['procurement']=='Buy') |
-                                        (~comps_forecast['category'].str.contains("Miscellaneous"))]
-    comps_forecast = comps_forecast.loc[(comps_forecast['procurement']=='Buy') |
-                                        (comps_forecast['cpn_int']<9910000000)]
-    # ALSO WANT TO DROP PCBAS THAT AREN'T PURCHASED
-    comps_forecast = comps_forecast.loc[(comps_forecast['procurement']=='Buy') |
-                                        (~comps_forecast['cpn'].str.startswith('913-'))]
-    # AND EBOM AND MBOMS
-    comps_forecast = comps_forecast.loc[(comps_forecast['procurement']=='Buy') |
-                                        (~comps_forecast['category'].str.contains("BOM"))]
-    # AND ALL BOARDS THAT AREN'T PURCHASED
-    comps_forecast = comps_forecast.loc[(comps_forecast['procurement']=='Buy') |
-                                        (~comps_forecast['category'].str.contains("Board"))]
-    # AND SPARES CPNS THAT AREN'T PURCHASED
-    comps_forecast = comps_forecast.loc[(comps_forecast['procurement']=='Buy') |
-                                        (~comps_forecast['name'].str.contains("SPARE"))]
-
+    comps_forecast['cpn_int'] = comps_forecast['cpn'].str.replace(
+        '-', '').astype(int)
+    # 11/21/22 - REMOVING FILTERING IN FAVOR OR PROCUREMENT DECISION FILE FORM CJ
+    # comps_forecast = comps_forecast.loc[(comps_forecast['procurement'] == 'Buy') |
+    #                                     (~comps_forecast['category'].str.contains("Miscellaneous"))]
+    # comps_forecast = comps_forecast.loc[(comps_forecast['procurement'] == 'Buy') |
+    #                                     (comps_forecast['cpn_int'] < 9910000000)]
+    # # ALSO WANT TO DROP PCBAS THAT AREN'T PURCHASED
+    # comps_forecast = comps_forecast.loc[(comps_forecast['procurement'] == 'Buy') |
+    #                                     (~comps_forecast['cpn'].str.startswith('913-'))]
+    # # AND EBOM AND MBOMS
+    # comps_forecast = comps_forecast.loc[(comps_forecast['procurement'] == 'Buy') |
+    #                                     (~comps_forecast['category'].str.contains("BOM"))]
+    # # AND ALL BOARDS THAT AREN'T PURCHASED
+    # comps_forecast = comps_forecast.loc[(comps_forecast['procurement'] == 'Buy') |
+    #                                     (~comps_forecast['category'].str.contains("Board"))]
+    # # AND SPARES CPNS THAT AREN'T PURCHASED
+    # comps_forecast = comps_forecast.loc[(comps_forecast['procurement'] == 'Buy') |
+    #                                     (~comps_forecast['name'].str.contains("SPARE"))]
 
     # GROUP BY CPN AND SUM REQUIRED QUANTITIES
     # WHILE FLATTENING STRINGS TO A SINGLE ENTRY PER CPN
@@ -428,12 +494,13 @@ def main(api_key):
 
     # BETTER COMPARISON BECAUSE MPN AND PROC IS GROUPED
     # AND SUMMED TO A SINGLE CPN ENTRY BEFORE MERGE
-    comps_forecast_mpn_proc = comps_forecast.merge(mpn_proc, 'left', 'cpn')
-    comps_forecast_mpn_proc = comps_forecast_mpn_proc.merge(
+    comps_forecast_mpn_inv = comps_forecast.merge(mpn_inv, 'left', 'cpn')
+    comps_forecast_mpn_inv = comps_forecast_mpn_inv.merge(
         durobom_forecast[['cpn', 'name', 'category']].drop_duplicates())
 
-    comps_forecast_mpn_proc['mpn'] = comps_forecast_mpn_proc['mpn'].fillna('')
-    comps_forecast_mpn_proc['mpn'] = comps_forecast_mpn_proc.apply(lambda x: str(x['cpn']) + str(x['mpn']), axis=1)
+    comps_forecast_mpn_inv['mpn'] = comps_forecast_mpn_inv['mpn'].fillna('')
+    # comps_forecast_mpn_inv['mpn'] = comps_forecast_mpn_inv.apply(
+    #     lambda x: str(x['cpn']) + str(x['mpn']), axis=1)
 
     def colcomp(forecast, onhand):
         if onhand > forecast:
@@ -444,28 +511,28 @@ def main(api_key):
     # CREATING INDICATOR COLUMNS
     # EACH COLUMN = YES IF THERE IS ENOUGH MATERIAL ORDERED, = NO IF NOT
     # TO BE A YES FOR DVT, ORDER QTY > SUM(EVT, DVT) AND SO ON FOR PVT AND MP
-    comps_forecast_mpn_proc['evt_ok'] = comps_forecast_mpn_proc.apply(
-        lambda x: colcomp(x['evt1']+x['evt2'], x['total_qty']), axis=1)
-    comps_forecast_mpn_proc['dvt_ok'] = comps_forecast_mpn_proc.apply(
-        lambda x: colcomp(x['evt1']+x['evt2']+x['dvt'], x['total_qty']), axis=1)
-    comps_forecast_mpn_proc['pvt_ok'] = comps_forecast_mpn_proc.apply(
-        lambda x: colcomp(x['evt1']+x['evt2']+x['dvt']+x['pvt'], x['total_qty']), axis=1)
-    comps_forecast_mpn_proc['lot1_ok'] = comps_forecast_mpn_proc.apply(lambda x: colcomp(
-        x['evt1']+x['evt2']+x['dvt']+x['pvt']+x['lot1'], x['total_qty']), axis=1)
-    comps_forecast_mpn_proc['lot2_ok'] = comps_forecast_mpn_proc.apply(lambda x: colcomp(
-        x['evt1']+x['evt2']+x['dvt']+x['pvt']+x['lot1']+x['lot2'], x['total_qty']), axis=1)
-    comps_forecast_mpn_proc['lot3_ok'] = comps_forecast_mpn_proc.apply(lambda x: colcomp(
-        x['evt1']+x['evt2']+x['dvt']+x['pvt']+x['lot1']+x['lot2']+x['lot3'], x['total_qty']), axis=1)
-    comps_forecast_mpn_proc['lot4_ok'] = comps_forecast_mpn_proc.apply(lambda x: colcomp(
-        x['evt1']+x['evt2']+x['dvt']+x['pvt']+x['lot1']+x['lot2']+x['lot3']+x['lot4'], x['total_qty']), axis=1)
-    comps_forecast_mpn_proc = comps_forecast_mpn_proc.sort_values(by=['evt_ok',
-                                                                      'dvt_ok',
-                                                                      'pvt_ok',
-                                                                      'lot1_ok',
-                                                                      'lot2_ok',
-                                                                      'lot3_ok',
-                                                                      'lot4_ok'],
-                                                                  ascending=True).reset_index(drop=True)
+    comps_forecast_mpn_inv['evt_ok'] = comps_forecast_mpn_inv.apply(
+        lambda x: colcomp(x['evt'], x['total_qty']), axis=1)
+    comps_forecast_mpn_inv['dvt_ok'] = comps_forecast_mpn_inv.apply(
+        lambda x: colcomp(x['evt']+x['dvt'], x['total_qty']), axis=1)
+    comps_forecast_mpn_inv['pvt_ok'] = comps_forecast_mpn_inv.apply(
+        lambda x: colcomp(x['evt']+x['dvt']+x['pvt'], x['total_qty']), axis=1)
+    comps_forecast_mpn_inv['lot1_ok'] = comps_forecast_mpn_inv.apply(lambda x: colcomp(
+        x['evt']+x['dvt']+x['pvt']+x['lot1'], x['total_qty']), axis=1)
+    comps_forecast_mpn_inv['lot2_ok'] = comps_forecast_mpn_inv.apply(lambda x: colcomp(
+        x['evt']+x['dvt']+x['pvt']+x['lot1']+x['lot2'], x['total_qty']), axis=1)
+    comps_forecast_mpn_inv['lot3_ok'] = comps_forecast_mpn_inv.apply(lambda x: colcomp(
+        x['evt']+x['dvt']+x['pvt']+x['lot1']+x['lot2']+x['lot3'], x['total_qty']), axis=1)
+    comps_forecast_mpn_inv['lot4_ok'] = comps_forecast_mpn_inv.apply(lambda x: colcomp(
+        x['evt']+x['dvt']+x['pvt']+x['lot1']+x['lot2']+x['lot3']+x['lot4'], x['total_qty']), axis=1)
+    comps_forecast_mpn_inv = comps_forecast_mpn_inv.sort_values(by=['evt_ok',
+                                                                    'dvt_ok',
+                                                                    'pvt_ok',
+                                                                    'lot1_ok',
+                                                                    'lot2_ok',
+                                                                    'lot3_ok',
+                                                                    'lot4_ok'],
+                                                                ascending=True).reset_index(drop=True)
 
     # FINAL FORMATTING FOR LEGIBILITY
     cols_to_move = ['parent',
@@ -474,22 +541,22 @@ def main(api_key):
                     'category']
 
     cols = cols_to_move + \
-        [col for col in comps_forecast_mpn_proc.columns if col not in cols_to_move]
-    comps_forecast_mpn_proc = comps_forecast_mpn_proc[cols]
+        [col for col in comps_forecast_mpn_inv.columns if col not in cols_to_move]
+    comps_forecast_mpn_inv = comps_forecast_mpn_inv[cols]
 
     # TO COMPUTE THE BUY QTY WE US APPLY AND SUBTRACT THE TOTAL PURCHASED FROM
     # THE FORECASTED TOTAL WHERE FORECAST IS GREATER THAN WHAT WE'VE PURCHASED
-    comps_forecast_mpn_proc['buy_qty'] = comps_forecast_mpn_proc.apply(
+    comps_forecast_mpn_inv['buy_qty'] = comps_forecast_mpn_inv.apply(
         lambda x: x['forecast_total'] - x['total_qty'] if x['forecast_total'] > x['total_qty'] else 0, axis=1)
 
-    csv = histup + 'comp_forecast_mpn_proc' + \
+    csv = histup + 'comp_forecast_mpn_inv' + \
         time.strftime("%Y%m%d-%H%M%S") + '.xlsx'
-    comps_forecast_mpn_proc.to_excel(csv, index=False)
+    comps_forecast_mpn_inv.to_excel(csv, index=False)
 
     # In[THIS SECTION BUILDS THE BUY QTY DF]
-    # WE WANT TO PULL SOURCING DATA FROM DURO FOR QTYS ABOVE AND BELOW OUR 
+    # WE WANT TO PULL SOURCING DATA FROM DURO FOR QTYS ABOVE AND BELOW OUR
     # IDENTIFIED BUY QTY
-    buyqty = comps_forecast_mpn_proc[['cpn', 'name', 'buy_qty']]
+    buyqty = comps_forecast_mpn_inv[['cpn', 'name', 'buy_qty']]
     buyqty = buyqty.merge(srcs, 'left', 'cpn')
     # THE ORDER RATIO HELPS US IDENTIFY WHICH MOQS ARE NEAREST OUR
     # BUY QTY
@@ -530,13 +597,13 @@ def main(api_key):
     buyqtyind = buyqty[['cpn', 'key']].copy()
     buyqtyind['sourcing_info'] = 'Yes'
     buyqtyind = buyqtyind.drop(columns=['key']).drop_duplicates()
-    comps_forecast_mpn_proc = comps_forecast_mpn_proc.merge(
+    comps_forecast_mpn_inv = comps_forecast_mpn_inv.merge(
         buyqtyind, 'left', 'cpn')
-    comps_forecast_mpn_proc['sourcing_info'] = comps_forecast_mpn_proc['sourcing_info'].fillna(
+    comps_forecast_mpn_inv['sourcing_info'] = comps_forecast_mpn_inv['sourcing_info'].fillna(
         'No')
 
-    hash1 = pd.util.hash_pandas_object(comps_forecast_mpn_proc).sum()
-    logging.debug("comps_forecast_mpn_proc hash value = "+str(hash1))
+    hash1 = pd.util.hash_pandas_object(comps_forecast_mpn_inv).sum()
+    logging.debug("comps_forecast_mpn_inv hash value = "+str(hash1))
     logging.debug(hash1)
 
     # In[HERE IS WHERE WE SPLIT THE COMPONENTS BY ELECTRICAL AND MECHANICAL]
@@ -544,34 +611,62 @@ def main(api_key):
     # THIS FILE WILL NEED UPDATING IF DURO MAKES UPDATES ON OUR BEHALF
     elec = pd.read_csv("./DURO-CATEGORY-REFERENCES.csv")
     elec = elec[elec['Category'] ==
-                "-- ELECTRICAL --"].drop(columns=['Category'])
+                "-- ELECTRICAL --"].drop(columns=['Category']).reset_index(drop=True)
 
-    # THE NEXT 3 LINES ADD CATEGORIES TO THE ELECTRICAL DF THAT AREN'T
-    # IN DURO - THIS GETS FANS AND HEATSINKS TO THE ELECTRICAL DF FOR TRACKING
-    assys = ['Fan', 'Cable Assembly', 'Heatsink']
-    assys = pd.DataFrame(assys, columns=['Value'])
-    elec = elec.append(assys)
+    # 11/21/22 - REMOVING FILTERING IN FAVOR OR PROCUREMENT DECISION FILE FORM CJ
+    # # THE NEXT 3 LINES ADD CATEGORIES TO THE ELECTRICAL DF THAT AREN'T
+    # # IN DURO - THIS GETS FANS AND HEATSINKS TO THE ELECTRICAL DF FOR TRACKING
+    # assys = ['Fan', 'Cable Assembly', 'Heatsink']
+    # assys = pd.DataFrame(assys, columns=['Value'])
+    # elec = elec.append(assys)
 
-    elec_comps_forecast_mpn_proc = comps_forecast_mpn_proc[comps_forecast_mpn_proc['category'].isin(
-        elec['Value'])]
-    mech_comps_forecast_mpn_proc = comps_forecast_mpn_proc[~comps_forecast_mpn_proc['category'].isin(
-        elec['Value'])]
+    # PULLING IN PROCUREMENT DECISION FILE AND DROPPING EXISTING PROCURMENT COL
+    proc = pd.read_excel("./data/procurement.xlsx",
+                         sheet_name = 'Full Rack Flattened',
+                         header=0)
+    proc = proc[['CPN', 'Procurement']]
+    proc = proc.rename(columns={'CPN':'cpn', 'Procurement':'procurement'})
+    comps_forecast_mpn_inv = comps_forecast_mpn_inv.drop(['procurement'], axis=1)
+    comps_forecast_mpn_inv = comps_forecast_mpn_inv.merge(proc, 'left', 'cpn')
+
+    comps_forecast_mpn_inv['type'] = comps_forecast_mpn_inv.apply(lambda x: '--electrical--' if elec['Value'].str.contains(x['category']).any()else 'mechanical', axis=1)
+
+    elec_comps_forecast_mpn_inv = comps_forecast_mpn_inv[comps_forecast_mpn_inv['type'] == '--electrical--']
+    mech_comps_forecast_mpn_inv = comps_forecast_mpn_inv[comps_forecast_mpn_inv['type'] != '--electrical--']
+
+    cols_to_move = ['parent',
+                    'cpn',
+                    'name',
+                    'type',
+                    'category',
+                    'procurement']
+
+    cols = cols_to_move + \
+        [col for col in comps_forecast_mpn_inv.columns if col not in cols_to_move]
+    comps_forecast_mpn_inv = comps_forecast_mpn_inv[cols]
 
     # NEW SECTION FOR COPYING NOTES OVER USING CTB TAB
     # PULL CTB NOTES, THEN CF NOTES, APPEND CF TO CTB AND DROP DUPS KEEP FIRST
     old_notes = './data/old_comp_forecast.xlsx'
     old_ctb_get = pd.read_excel(old_notes,
-                             sheet_name='ClearToBuild',
-                             header=0)
+                                sheet_name='ClearToBuild',
+                                header=0)
     old_cf_get = pd.read_excel(old_notes,
-                             sheet_name='Elec.Component.Analysis',
-                             header=0)
-    old_notes = old_ctb_get[['cpn', 'Notes']].append(old_cf_get[['cpn', 'Notes']])
-    old_notes = old_notes.drop_duplicates(subset=['cpn'], keep='first')#(keep='first')
-    elec_comps_forecast_mpn_proc = elec_comps_forecast_mpn_proc.merge(old_notes, 'left', 'cpn')
+                               sheet_name='Elec.Component.Analysis',
+                               header=0)
+    old_notes = old_ctb_get[['cpn', 'Notes']].append(
+        old_cf_get[['cpn', 'Notes']])
+    old_notes = old_notes.drop_duplicates(
+        subset=['cpn'], keep='first')  # (keep='first')
+    comps_forecast_mpn_inv = comps_forecast_mpn_inv.merge(
+        old_notes, 'left', 'cpn')
+    elec_comps_forecast_mpn_inv = elec_comps_forecast_mpn_inv.merge(old_notes,
+                                                                    'left',
+                                                                    'cpn')
 
     # THIS IS THE NEW CLEAR TO BUILD DF
-    ctb = elec_comps_forecast_mpn_proc.loc[(elec_comps_forecast_mpn_proc['lot4_ok']=='No')]
+    ctb = comps_forecast_mpn_inv.loc[(
+        comps_forecast_mpn_inv['lot4_ok'] == 'No')]
     # In[CREATE AND NAME XLS MULTI-WORKSHEET FILE]
     # CREATE AND NAME XLS MULTI-WORKSHEET FILE
     uploads = './uploads/'
@@ -580,35 +675,36 @@ def main(api_key):
 
     # Write each dataframe to a different worksheet.
     ctb.to_excel(writer, sheet_name='ClearToBuild')
-    elec_comps_forecast_mpn_proc.to_excel(
+    elec_comps_forecast_mpn_inv.to_excel(
         writer, sheet_name='Elec.Component.Analysis')
-    mech_comps_forecast_mpn_proc.to_excel(
+    mech_comps_forecast_mpn_inv.to_excel(
         writer, sheet_name='Mech.Component.Analysis')
     buyqty.to_excel(writer, sheet_name='DuroSourcingOptions', index=False)
 
     # THIS SECTION CREATES THE DEMAND FORECAST AND PLANNING PN DFS
     # THIS HELPS RETAIN WHAT DEMAND FORECAST AND PLANNING PNS WERE USED TO
     # GENERATE THE REPORT
-    pldmnd = forecast_grouped_pvt.join(
+    pldmnd = mps_tbl.join(
         pd.DataFrame.from_dict(bldphase, orient='index'))
     pldmnd = pldmnd.sort_values(by=[0]).reset_index(
         drop=False).drop(columns=[0])
     pldmnd.to_excel(writer, sheet_name='DemandForecast', index=False)
-    plcpn = forecast_get[forecast_get['CPN Name'].str.contains(
+    plcpn = durobom_forecast[durobom_forecast['name'].str.contains(
         'PLANNING')].copy()
-    plcpn = plcpn['CPN']
-    plbom = durobom_forecast_mpn_proc[['query_pn',
-                                       'cpn',
-                                       'name',
-                                       'category',
-                                       'quantity',
-                                       'level']].copy()
+    plcpn = plcpn['cpn']
+    plbom = durobom_forecast_mpn_inv[['query_pn',
+                                      'cpn',
+                                      'name',
+                                      'category',
+                                      'quantity',
+                                      'level']].copy()
     plbom = plbom[plbom['level'] < 2]
     plbom = plbom[plbom['query_pn'].isin(plcpn)]
     plbom.to_excel(writer, sheet_name='Planning.BOM.PNs', index=False)
     # opnord = oxopn.main()
     # opnord.to_excel(writer, sheet_name='Open.Orders', index=False)
 
+    durobom_forecast.to_excel(writer, sheet_name='BOM.and.Forecast', index=False)
     # Close the Pandas Excel writer and output the Excel file.
     writer.save()
 
@@ -616,7 +712,8 @@ def main(api_key):
         "FINISH REMOVING ASSEMBLIES AND GROUPING DATA BY COMPONENT PN")
     nd = dt.datetime.now()
     logging.info(nd-st)
-    return comps_forecast_mpn_proc, srcs, manf
+    return comps_forecast_mpn_inv, srcs, manf
+
 
 # In[__name__ == __main__]
 if __name__ == '__main__':
@@ -632,9 +729,9 @@ if __name__ == '__main__':
     logging.info("START compforecast.py __main__ HERE")
 
     desc_string = 'This utility builds the Ops Component Forecast Analsyis.' \
-    ' It combines Duro BOM, GDrive Inventory, and GDrive Forecast info to ' \
-    'calculate required component quantities for forecasted demand. It ' \
-    'produces the Clear To Build report stored at GDrive > OpsAuto > Reports'
+        ' It combines Duro BOM, GDrive Inventory, and GDrive Forecast info to ' \
+        'calculate required component quantities for forecasted demand. It ' \
+        'produces the Clear To Build report stored at GDrive > OpsAuto > Reports'
     epilog_string = ''
 
     parser = argparse.ArgumentParser(description=desc_string,
@@ -649,16 +746,15 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-
     # BEFORE BEGINNING BLOCK 1 > DELETE FILES IN ECO UPDATE GDRIVE FOLDER
     if args.API:
         print('run parameter is api = %s' % str(args.API))
         cfmp, sources, manf_names = main(args.API)
-        
+
     else:
         print("NO CLI Input")
         with open("./creds.yml", 'r') as crstream:
             allcreds = yaml.safe_load(crstream)
         cfmp, sources, manf_names = main(allcreds['oxide_duro']['api_key'])
-        
+
     logging.info("FINISH compforecast.py __main__ HERE")

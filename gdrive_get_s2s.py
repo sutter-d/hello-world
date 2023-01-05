@@ -35,6 +35,22 @@ from google.oauth2 import service_account
 
 
 def get_file(oxfile_id, oxfile_name):
+    """
+    This function pulls a file from GDrive and stores it to
+    the local ./data folder
+
+    Parameters
+    ----------
+    oxfile_id : TYPE String
+        DESCRIPTION. GDrive file id for file to download
+    oxfile_name : TYPE String
+        DESCRIPTION. Text for file name for file file in ./data folder
+
+    Returns
+    -------
+    None.
+
+    """
     file_id = oxfile_id
     logging.debug("starting to build googleapi service object")
 
@@ -79,7 +95,24 @@ def get_file(oxfile_id, oxfile_name):
 
 # In[get_list fcn]
 def get_list(oxshared_id, oxfolder_id):
+    """
+    This function pulls a list of filenames and file_ids from the
+    specified GDrive folder
 
+    Parameters
+    ----------
+    oxshared_id : TYPE String
+        DESCRIPTION. This is the GDrive shared drive ID - different from
+        the folder ID
+    oxfolder_id : TYPE
+        DESCRIPTION. This is the GDrive folder ID
+
+    Returns
+    -------
+    df : TYPE DataFrame
+        DESCRIPTION. List of all the files stored in the specified folder
+
+    """
     logging.debug("starting to build googleapi service object")
 
     SCOPES = ['https://www.googleapis.com/auth/drive']
@@ -131,14 +164,20 @@ if __name__ == '__main__':
                         level=loglvl,
                         format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
 
-    # Here we are pulling the inventory and production forecast files
+    # Here we are pulling static GDrive files used in analysis
     # We pull each file and save it to the ./data folder for use
     data = [['1FCbWNjMVxbwumpXy84MMtTi4wu-I7qd_', 'ox_bm_inv_shared'],  # BM AND OXIDE INVENTORY FILE IN SHARED DOC FOLDER
-            ['1UXyOtpZ9OEL3SmTq-Ak0pUUlVz1Q6mS2', 'prod_forecast']]  # OXIDE PRODUCTION FORECAST FILE
+            ['1UXyOtpZ9OEL3SmTq-Ak0pUUlVz1Q6mS2', 'prod_forecast'],  # OXIDE PRODUCTION FORECAST FILE
+            ['1DQJneaNwyosIyFsnJzKhr3y0D4X2gLW_', 'ctb_contents'],  #LATEST CTB SUMMARY FILE FOR FIST PAGE OF XLSX
+            ['1bEEtdW9rBK2KI6HRsVyhxnleZ3wkiJVQ', 'ox_eng_inv'],  # GRABBING LATEST ENG INV FROM Ops > OpsAuto > Attachments
+            ['1UXyOtpZ9OEL3SmTq-Ak0pUUlVz1Q6mS2', 'mps'],   # GRABBING LATEST MPS FROM Ops > Forecast/Master Schedule
+            ['1PYgmEmpzg5X54wnSUCl6mY_LZpmhZ4VK', 'procurement']  # GRABBING LATEST PROCUREMENT DECISION FROM Ops > OpsAuto
+            ]
 
     file_id = pd.DataFrame(data=data, columns=['id', 'name'])
 
     for x in range(len(file_id['id'])):
+        logging.info(file_id.iloc[x,:])
         get_file(file_id.at[x, 'id'], file_id.at[x, 'name'])
 
     # Here we are pulling the meta data for the ops auto > reports folder
@@ -150,8 +189,22 @@ if __name__ == '__main__':
 
     df = get_list(drive_id, flder_id)
     df = df[df['name'].str.startswith(
-        'Component_Forecast')].reset_index(drop=True)
+        'ClearToBuild_')].reset_index(drop=True)
     df = df.loc[0, 'id']
     logging.debug("File ID: " + df)
 
-    get_file(df, 'old_comp_forecast')
+    get_file(df, 'old_ctb')
+
+    # Here we are pulling the meta data for the ops auto > attachments folder
+    # We need to find the latest version of the production inventory file to
+    # Copy over the notes and comments
+
+    flder_id = '1LIN-_wuwnJWnE0xKhvNbFwk2lBtkHfco' #ops auto > reports folder id
+
+    df = get_list(drive_id, flder_id)
+    df = df[df['name'].str.startswith(
+        'Oxide IOOASL')].reset_index(drop=True)
+    df = df.loc[0, 'id']
+    logging.debug("File ID: " + df)
+
+    get_file(df, 'ox_prod_inv')

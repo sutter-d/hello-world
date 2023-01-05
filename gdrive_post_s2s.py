@@ -15,13 +15,34 @@ import requests
 import yaml
 
 import pandas as pd
+import argparse
 import ds_utils as ds
 
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from googleapiclient.http import MediaFileUpload
 
-def main(oxfolder='1cifHUNhTLyeuDWtdhhmbJ176sL0O9uON'):
+def main(oxfolder='1cifHUNhTLyeuDWtdhhmbJ176sL0O9uON', isodate = True):
+    """
+    This functions will post files to a GDrive folder. The default is
+    the OpsAuto > Reports folder but you can specify other destinations
+
+    Parameters
+    ----------
+    oxfolder : TYPE, optional
+        DESCRIPTION. The upload destination GDrive folder id.
+        The default is '1cifHUNhTLyeuDWtdhhmbJ176sL0O9uON' (OpsAuto > Reports).
+    isodate : TYPE, optional
+        DESCRIPTION. Boolean input. If True, files will be uploaded with the 
+        isodate (YYYYMMDD) concatenated to the end of spreadsheets. If False,
+        files will be uploaded with only the original filename.
+        The default is True.
+
+    Returns
+    -------
+    None.
+
+    """
     SCOPES = ['https://www.googleapis.com/auth/drive']
 
     creds = None
@@ -53,9 +74,13 @@ def main(oxfolder='1cifHUNhTLyeuDWtdhhmbJ176sL0O9uON'):
     for filename in os.listdir(directory):
         if filename.endswith(".py")==False:
             logging.debug(os.path.join(directory, filename))
-            logging.debug(filename.replace('.xlsx', ''))
-            file_metadata = {'name': filename.replace('.xlsx', '') + time.strftime("%Y-%m-%d") + '.xlsx',
-                              'parents': [folder_id]}
+            if isodate is True:
+                logging.debug(filename.replace('.xlsx', ''))
+                file_metadata = {'name': filename.replace('.xlsx', '') + time.strftime("%Y-%m-%d") + '.xlsx',
+                                 'parents': [folder_id]}
+            else:
+                file_metadata = {'name': filename, 
+                                 'parents': [folder_id]}
             media = MediaFileUpload(os.path.join(directory, filename))
             file = service.files().create(body=file_metadata,
                                                 media_body=media,
@@ -91,4 +116,37 @@ if __name__ == '__main__':
     logging.basicConfig(filename=('./gitlogs/gdrive_post_s2s_' + time.strftime("%Y-%m-%d") + '.log'),
                         level=loglvl,
                         format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
-    main()
+
+    desc_string = 'This functions will post files to a GDrive folder. The' \
+        ' default is the OpsAuto > Reports folder but you can specify' \
+        ' other destinations'
+    epilog_string = "Folder default '1cifHUNhTLyeuDWtdhhmbJ176sL0O9uON' " \
+        "(OpsAuto > Reports) and will default to adding ISO Dates to xlsx files."
+
+    parser = argparse.ArgumentParser(description=desc_string,
+                                     epilog=epilog_string,
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    # run_type = parser.add_mutually_exclusive_group(required=True)
+    parser.add_argument('-f', '--folder_id',
+                        action='store',
+                        dest='FLDR',
+                        default = 'OpsAuto>Reports',
+                        help='destination GDrive folder_id')
+
+    parser.add_argument('-i', '--isodate',
+                        action='store',
+                        dest='ISO',
+                        default = 'ISO=True',
+                        help='True = add isodate to filename, False = keep filename')
+
+
+    args = parser.parse_args()
+    if args.FLDR == 'OpsAuto>Reports' and args.ISO == 'ISO=True':
+        main()
+    if args.FLDR != 'OpsAuto>Reports' and args.ISO == 'ISO=True':
+        main(oxfolder=args.FLDR)
+    if args.FLDR == 'OpsAuto>Reports' and args.ISO != 'ISO=True':
+        main(isodate=args.ISO)
+    if args.FLDR != 'OpsAuto>Reports' and args.ISO != 'ISO=True':
+        main(oxfolder=args.FLDR, isodate=args.ISO)

@@ -12,7 +12,7 @@ import time
 import yaml
 import os
 import inspect
-# import datetime as dt
+import datetime as dt
 # import base64
 # from requests import HTTPError
 # import json
@@ -61,9 +61,11 @@ if __name__ == '__main__':
     logging.basicConfig(filename=('/Volumes/GoogleDrive/Shared drives/Docs/Operations/OpsAutomation/logs/test/cpn_mpn_export_' + time.strftime("%Y-%m-%d") + '.log'),
                         level=loglvl,
                         format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
-
+    st = dt.datetime.now()
     logging.info("START cpn_mpn_export.py __main__ HERE")
     cpns = ds.cpn()
+    nd = dt.datetime.now()
+    print(nd-st)
     cpn_mpns = cpnmpn(cpns)
 
     # Save results to your local desktop
@@ -74,5 +76,6 @@ if __name__ == '__main__':
 
     # Close the Pandas Excel writer and output the Excel file.
     writer.save()
-
+    nd = dt.datetime.now()
+    print(nd-st)
     logging.info("FINISH cpn_mpn_export.py __main__ HERE")

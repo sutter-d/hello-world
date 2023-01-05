@@ -58,7 +58,8 @@ cols = ['parent',
         'quantity',
         'name',
         'category',
-        'procurement']
+        'procurement',
+        'pnladder']
 
 durobom = durobom[cols]
 
