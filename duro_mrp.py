@@ -36,82 +36,6 @@ logging.basicConfig(filename=('./gitlogs/duro_mrp' + time.strftime("%Y-%m-%d") +
                     level=loglvl,
                     format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
 
-# # GRABBING LT FILE FOR RACK AND ALL TLA, SUBS, AND PCBAs
-# lt_id = '1D0PcawQYmnFd5F8BcNRK9fILWji78iOD'
-# lt_name = 'Rack.LTs'
-# lt_path = './data/Rack.LTs.xlsx'
-# get.get_file(lt_id, lt_name)
-
-# lts = pd.read_excel(lt_path, sheet_name='Sheet1', header=0)
-
-# lts = lts[~lts['lt'].isna()].reset_index(drop=True)
-# logging.info("Lead Time df ready")
-
-# # GRABBING LATEST MPS FROM Ops > Forecast/Master Schedule
-# mps_id = '1UXyOtpZ9OEL3SmTq-Ak0pUUlVz1Q6mS2'
-# mps_name = 'mps'
-# mps_path = './data/mps.xlsx'
-
-# get.get_file(mps_id, mps_name)
-
-# # In[CLEAN TO GET MPS TAB INTO USABLE TIDY FORMAT]
-# mps = pd.read_excel(mps_path, sheet_name='Master Schedule', header=4)
-# mps = mps.iloc[0:7, 2:108]
-# mps = mps.iloc[2:7, :]
-# mps = mps.drop(columns=['ISO Week']).rename(columns={'Unnamed: 2': 'cpn'})
-# mps = mps.fillna(0)
-# mps = pd.melt(mps, id_vars='cpn')
-# mps = mps.rename(columns={'variable': 'wk', 'value': 'qty'})
-# mps['wk'] = mps['wk'].apply(lambda x: str(x))
-# mps['year'] = mps.apply(lambda x: 2023 if '.1' in x['wk'] else 2022, axis=1)
-# mps['wk'] = mps['wk'].apply(lambda x: x.replace('.1', ''))
-# mps['wk'] = mps['wk'].apply(lambda x: int(x))
-# mps = mps[mps['qty'] != 0]
-# cols = ['cpn',
-#         'year',
-#         'wk',
-#         'qty']
-# mps = mps[cols]
-
-# mps['lot_num'] = ''
-# mps['lot_num'] = mps.apply(
-#     lambda x: 'lot1' if x['year'] == 2023 else 'dvt', axis=1)
-# mps.loc[(mps['year'] == 2022) & (mps['wk'] < 40), 'lot_num'] = 'evt'
-# mps.loc[(mps['year'] == 2023) & (mps['wk'] < 9), 'lot_num'] = 'pvt'
-# mps.loc[(mps['year'] == 2023) & (mps['wk'] > 13), 'lot_num'] = 'lot2'
-# mps.loc[(mps['year'] == 2023) & (mps['wk'] > 26), 'lot_num'] = 'lot3'
-# mps.loc[(mps['year'] == 2023) & (mps['wk'] > 39), 'lot_num'] = 'lot4'
-# mps.loc[mps['qty'].str.startswith('^') == True, 'lot_num'] = 'planning fence'
-# # fnc = mps.loc[mps['qty'].str.startswith('^') == True].copy()
-# # mps = mps.loc[mps['qty'].str.startswith('^') == False]
-# mps['lot_ord'] = mps[mps['lot_num'] != 'planning fence'].groupby(
-#     ['lot_num']).cumcount()+1
-# mps['lot_ord'] = mps['lot_ord'].fillna(0)
-# mps = mps.reset_index(drop=True)
-
-# logging.info("MPS df ready")
-
-# # In[BUILDING ISOWEEK AND YEAR DATAFRAME FOR MRP CALCS]
-# tmp = pd.DataFrame(index=range(53), columns=range(1))
-# tmp = tmp.reset_index(drop=False).drop(columns=[0])
-# isowk = tmp.copy()
-# isowk['year'] = 2022
-# isowk = isowk.rename(columns={'index': 'wk'})
-# tmp['year'] = 2023
-# tmp = tmp.rename(columns={'index': 'wk'})
-# isowk = isowk.append(tmp)
-# tmp['year'] = 2024
-# tmp = tmp.rename(columns={'index': 'wk'})
-# isowk = isowk.append(tmp)
-# isowk = isowk.reset_index(drop=True)
-# isowk = isowk[isowk['wk'] != 0]
-
-# isowk['Monday'] = isowk.apply(lambda x: str(
-#     dt.date.fromisocalendar(x['year'], x['wk'], 1)), axis=1)
-# isowk['Friday'] = isowk.apply(lambda x: str(
-#     dt.date.fromisocalendar(x['year'], x['wk'], 5)), axis=1)
-# logging.info("ISO df ready")
-
 # In[]
 
 
@@ -142,7 +66,8 @@ def mrp_build(oxrack, oxlts, oxordr):
     """
     # [COMBINING RACK AND LT DFs AND FINDING NEED BY DATE]
     oxordr = oxordr.reset_index(drop=True)
-    oxmrp = oxrack.merge(oxlts[['cpn', 'lt']], 'left', 'cpn')
+    # oxmrp = oxrack.merge(oxlts[['cpn', 'lt']], 'left', 'cpn')
+    oxmrp = oxrack.merge(oxlts, 'left', 'cpn')
     oxmrp['lt'] = oxmrp['lt'].fillna(0)
     oxmrp['due_date'] = None
     oxmrp['due_year'] = None
@@ -166,7 +91,7 @@ def mrp_build(oxrack, oxlts, oxordr):
     bom_lvls = bom_lvls.drop_duplicates().reset_index(drop=True)
     bom_lvls = bom_lvls.loc[1:].reset_index(drop=True)
     for lvls in bom_lvls:
-        print(lvls)
+        logging.debug(lvls)
         for x in range(len(oxmrp['cpn'])):
             if oxmrp.at[x, 'level'] == lvls:
                 logging.debug(oxmrp.at[x, 'cpn'])
@@ -212,6 +137,7 @@ def mrp_build(oxrack, oxlts, oxordr):
                     'name',
                     'category',
                     'level',
+                    'lt',
                     'due_date',
                     'due_year',
                     'need_by_date',
@@ -223,14 +149,24 @@ def mrp_build(oxrack, oxlts, oxordr):
 
 
 # In[GRABBING LT FILE FOR RACK AND ALL TLA, SUBS, AND PCBAs]
-lt_id = '1D0PcawQYmnFd5F8BcNRK9fILWji78iOD'
-lt_name = 'Rack.LTs'
-lt_path = './data/Rack.LTs.xlsx'
-get.get_file(lt_id, lt_name)
+# lt_id = '1D0PcawQYmnFd5F8BcNRK9fILWji78iOD'
+# lt_name = 'Rack.LTs'
+# lt_path = './data/Rack.LTs.xlsx'
+# get.get_file(lt_id, lt_name)
+#
+# lts = pd.read_excel(lt_path, sheet_name='Sheet1', header=0)
+# lts = lts[~lts['lt'].isna()]
+# lts = lts.groupby("cpn", as_index=False).first().reset_index(drop=True)
 
-lts = pd.read_excel(lt_path, sheet_name='Sheet1', header=0)
+# PULLING IN PROCUREMENT DECISION FILE AND DROPPING EXISTING PROCUREMENT COL
+item_master = pd.read_excel("./data/item_master.xlsx",
+                     sheet_name='CPN Item Master',
+                     header=0)
+item_master = item_master[['CPN', 'Lead Time (Weeks)']]
+item_master = item_master.rename(columns={'CPN': 'cpn', 'Lead Time (Weeks)': 'lt'})
 
-lts = lts[~lts['lt'].isna()].reset_index(drop=True)
+lts = item_master[~item_master['lt'].isna()]
+lts = lts.groupby("cpn", as_index=False).first().reset_index(drop=True)
 logging.info("Lead Time df ready")
 
 # GRABBING LATEST MPS FROM Ops > Forecast/Master Schedule
@@ -248,7 +184,8 @@ def clean_mps(oxmps):
     """
     This function will take the MPS from the Ops > Forecast/Master Schedule
     GDrive and clean and pivot for use in Prod Scheduling as an Order list by
-    PN, Qty, and Lot
+    PN, Qty, and Lot.
+    ***NOTE*** SET HEADER TO ROW 4
 
     Parameters
     ----------
@@ -262,8 +199,8 @@ def clean_mps(oxmps):
 
     """
     # oxmps = oxmps.iloc[0:9, 2:108]
-    oxmps = oxmps.iloc[0:5, 2:160]
-    oxmps = oxmps.iloc[2:5, :]
+    oxmps = oxmps.iloc[0:9, 2:160]
+    oxmps = oxmps.iloc[2:9, :]
     oxmps = oxmps.drop(columns=['ISO Week']).rename(columns={'Unnamed: 2': 'cpn'})
     oxmps = oxmps.fillna(0)
     oxmps = pd.melt(oxmps, id_vars='cpn')
@@ -279,7 +216,7 @@ def clean_mps(oxmps):
             'wk',
             'qty']
     oxmps = oxmps[cols]
-    
+
     oxmps['lot_num'] = ''
     oxmps['lot_num'] = oxmps.apply(
         lambda x: 'lot1' if x['year'] == 2023 else ('lot5' if x['year'] == 2024 else 'dvt'), axis=1)
@@ -302,6 +239,9 @@ def clean_mps(oxmps):
     return oxmps
 
 mps = clean_mps(mps)
+iso_dt = dt.date.isocalendar(dt.datetime.now())
+mps = mps[mps['year'] >= iso_dt[0]]
+mps = mps[mps['wk'] >= iso_dt[1]]
 logging.info("MPS df ready")
 
 # In[BUILDING ISOWEEK AND YEAR DATAFRAME FOR MRP CALCS]
@@ -346,7 +286,7 @@ mrp = pd.DataFrame()
 for pns in range(len(cpns['cpn'])):
     logging.debug(pns)
     logging.debug(cpns.at[pns, 'cpn'])
-    rack = ds.s2sbuildbom(cpns.at[pns, 'cpn'],
+    rack = ds.s2sbuildbom_all(cpns.at[pns, 'cpn'],
                           opscreds['oxide_duro']['api_key'])
 
     rack = rack.loc[:, 'query_pn':'status']
@@ -367,6 +307,8 @@ for pns in range(len(cpns['cpn'])):
         logging.info("Appending results to MRP df")
         mrp = mrp.append(tmp)
         logging.debug(mrp.tail(1))
+
+mrp = mrp.reset_index(drop=True)
 
 uploads = './uploads/'
 # csv = uploads + 'mrp_raw.xlsx'
@@ -459,11 +401,11 @@ get.get_file(df, 'bm_inv')
 
 inv_gdrive = './data/bm_inv.xlsx'
 inv_get = pd.read_excel(
-    inv_gdrive, sheet_name='Inventory on hand', header=1)
+    inv_gdrive, sheet_name='Inventory on Hand', header=0)
 
 inv_cleaned = inv_get.copy()
-inv_cleaned['Part'] = inv_cleaned['Part'].map(lambda x: x.replace('OXC', ''))
-inv_cleaned['cpn'] = inv_cleaned['Part'].map(lambda x: x[:11])
+inv_cleaned['BEI Part'] = inv_cleaned['BEI Part'].map(lambda x: x.replace('OXC', ''))
+inv_cleaned['cpn'] = inv_cleaned['BEI Part'].map(lambda x: x[:11])
 
 cols_to_move = ['cpn']
 cols = cols_to_move + \
@@ -529,69 +471,10 @@ csv = uploads + 'mrp_export.xlsx'
 writer = pd.ExcelWriter(csv, engine='xlsxwriter')
 mps.to_excel(writer, sheet_name = 'mps', index=False)
 tbl.to_excel(writer, sheet_name = 'mrp_table')
+mrp.to_excel(writer, sheet_name="mrp_raw", index_label="idx")
 lts.to_excel(writer, sheet_name = 'lead_times', index=False)
 writer.save()
-gdrive_folder = '1LIN-_wuwnJWnE0xKhvNbFwk2lBtkHfco'
+gdrive_folder = '1LIN-_wuwnJWnE0xKhvNbFwk2lBtkHfco' #ops auto > attachments folder id
 post.main(gdrive_folder, isodate=False)
 print('Files uploaded to GDrive folder_id = %s' % gdrive_folder)
 ds.clear_dir("./uploads")
-
-# # In[GRABBING LATEST INV FILE FROM BENCHMARK]
-
-# drive_id = '0AKcpdSVwv34AUk9PVA' #oxide shared drive id - reqd for meta data pull
-# flder_id = '1LIN-_wuwnJWnE0xKhvNbFwk2lBtkHfco' #ops auto > attachments folder id
-
-# df = get.get_list(drive_id, flder_id)
-# df = df[df['name'].str.startswith(
-#     'Oxide ')].reset_index(drop=True)
-# df = df.loc[0, 'id']
-# logging.debug("File ID: " + df)
-
-# get.get_file(df, 'bm_inv')
-
-# # In[]
-
-# inv_gdrive = './data/bm_inv.xlsx'
-# inv_get = pd.read_excel(
-#     inv_gdrive, sheet_name='Inventory on hand', header=1)
-
-# inv_cleaned = inv_get.copy()
-# inv_cleaned['Part'] = inv_cleaned['Part'].map(lambda x: x.replace('OXC', ''))
-# inv_cleaned['cpn'] = inv_cleaned['Part'].map(lambda x: x[:11])
-
-# cols_to_move = ['cpn']
-# cols = cols_to_move + \
-#     [col for col in inv_cleaned.columns if col not in cols_to_move]
-# inv_cleaned = inv_cleaned[cols]
-
-# inv_oh = inv_cleaned.groupby(by=['cpn']).sum().reset_index(drop=False)
-
-# inv_oh = inv_oh[['cpn', 'Quantity']]
-# inv_oh = inv_oh.rename(columns={'Quantity':'qty'})
-# iso_dt = dt.date.isocalendar(dt.datetime.now())
-
-# inv_oh['wk'] = iso_dt[1]
-# inv_oh['year'] = iso_dt[0]
-
-# cols_to_move = ['pnladder',
-#                 'parent',
-#                 'cpn']
-# inv_mrp = mrp[cols_to_move].copy()
-
-# inv_mrp = inv_mrp.merge(inv_oh, 'left', 'cpn')
-# inv_mrp = inv_mrp[~inv_mrp['qty'].isnull()]
-
-# inv_mrp = inv_mrp.groupby(by=['pnladder',
-#                             'parent',
-#                             'cpn',
-#                             'year',
-#                             'wk']).sum()
-
-# inv_mrp = inv_mrp.reset_index(drop=False)
-
-# inv_tbl = inv_mrp.pivot_table(
-#     index = ["pnladder", "parent", "cpn"],
-#     columns = ["year", "wk"],
-#     values = "qty")
-
-# inv_tbl['type'] = 'OnHand'

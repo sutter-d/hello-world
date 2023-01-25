@@ -16,6 +16,7 @@ import pandas as pd
 import requests
 import argparse
 
+import ds_utils as ds
 from src import duro_utils as duro
 # import ds_utils as ds
 
@@ -255,51 +256,15 @@ def main(api_key):
 
     inv_gdrive = './data/ox_prod_inv.xlsx'
     open_po_get = pd.read_excel(inv_gdrive,
-                                sheet_name='Open POs',
-                                header=1)
+                                # sheet_name='Open Purchase Orders',
+                                sheet_name=0,
+                                header=0)
 
     on_hand_get = pd.read_excel(inv_gdrive,
-                                sheet_name='Inventory on hand',
-                                header=1)
+                                sheet_name=1,
+                                header=0)
 
-    open_po = open_po_get[['Part Number', 'Order', 'Seq', 'Quantity']].copy()
-    open_po['open_orders'] = open_po.apply(
-        lambda x: x['Seq'] + x['Quantity'], axis=1)
-    open_po = open_po.groupby(by=['Part Number']).agg(sum)
-    open_po = open_po.drop(columns=['Seq', 'Quantity'])
-    # open_po = open_po.rename(columns={'Part Number':'cpn'})
-
-    on_hand = on_hand_get[['Part', 'Description', 'Quantity']].copy()
-    on_hand = on_hand.dropna()
-    on_hand['Part'] = on_hand['Part'].map(lambda x: x.replace('OXC', ''))
-    on_hand['cpn'] = on_hand['Part'].map(lambda x: x[:11])
-    # on_hand = on_hand.groupby(by=['cpn']).agg(sum)
-    # TEMPORARY UNTIL ENGINEERING INVENTORY IS MOVED TO PRODUCTION
-    # REMOVE HERE DOWN
-    on_hand = on_hand.groupby(by=['cpn'], as_index=False).agg(sum)
-    on_hand = on_hand.rename(columns={'Quantity': 'on_hand'})
-
-    eng_gdrive = './data/ox_eng_inv.xlsx'
-    eng_oh_get = pd.read_excel(eng_gdrive,
-                               sheet_name='Summary',
-                               header=0)
-    eng_oh = eng_oh_get.copy()
-    eng_oh['cpn'] = eng_oh['cpn'].fillna('-')
-    eng_oh = eng_oh[eng_oh['cpn'] != '-']
-    eng_oh = eng_oh.groupby(by=['cpn'], as_index=False).agg(sum)
-    eng_oh = eng_oh.rename(columns={'total_qty': 'on_hand'})
-
-    on_hand = pd.concat((on_hand, eng_oh)).reset_index(drop=True)
-    on_hand = on_hand.groupby(by=['cpn']).agg(sum)
-    # REMOVE HERE UP
-
-    inv = pd.concat((open_po, on_hand), axis=1)
-
-    inv = inv.reset_index(drop=False)
-    inv = inv.fillna(0)
-    inv = inv.rename(columns={'Quantity': 'on_hand', 'index': 'cpn'})
-    inv['total_qty'] = inv.apply(
-        lambda x: x['open_orders'] + x['on_hand'], axis=1)
+    inv = ds.oxinv(open_po_get, on_hand_get)
 
     logging.info("FINISH PULLING PROCUREMENT TRACKER FROM GDRIVE")
 
@@ -452,8 +417,8 @@ def main(api_key):
     #         return 'Yes'
     #     else:
     #         return 'No'
-    
-    def yel_comp(forecast, onhand):
+
+    def yel_comp(forecast, onhand, lot_ok):
         """
         This is the fcn used to label an item as yellow in the CTB report.
 
@@ -470,11 +435,13 @@ def main(api_key):
             DESCRIPTION. Yellow for parts where onhand < forecast
 
         """
-        if onhand < forecast:
+        if lot_ok == '1-Red':
+            return '1-Red'
+        elif onhand < forecast:
             return '2-Yellow'
         else:
             return '3-Ok'
-        
+
     def red_comp(forecast, open_onhand):
         """
         This is the fcn used to label an item as red in the CTB report
@@ -522,19 +489,19 @@ def main(api_key):
                                                                 ascending=True).reset_index(drop=True)
 
     comps_forecast_mpn_inv['evt_ok'] = comps_forecast_mpn_inv.apply(
-        lambda x: yel_comp(x['evt'], x['on_hand']), axis=1)
+        lambda x: yel_comp(x['evt'], x['on_hand'], x['evt_ok']), axis=1)
     comps_forecast_mpn_inv['dvt_ok'] = comps_forecast_mpn_inv.apply(
-        lambda x: yel_comp(x['evt']+x['dvt'], x['on_hand']), axis=1)
+        lambda x: yel_comp(x['evt']+x['dvt'], x['on_hand'], x['dvt_ok']), axis=1)
     comps_forecast_mpn_inv['pvt_ok'] = comps_forecast_mpn_inv.apply(
-        lambda x: yel_comp(x['evt']+x['dvt']+x['pvt'], x['on_hand']), axis=1)
+        lambda x: yel_comp(x['evt']+x['dvt']+x['pvt'], x['on_hand'], x['pvt_ok']), axis=1)
     comps_forecast_mpn_inv['lot1_ok'] = comps_forecast_mpn_inv.apply(lambda x: yel_comp(
-        x['evt']+x['dvt']+x['pvt']+x['lot1'], x['on_hand']), axis=1)
+        x['evt']+x['dvt']+x['pvt']+x['lot1'], x['on_hand'], x['lot1_ok']), axis=1)
     comps_forecast_mpn_inv['lot2_ok'] = comps_forecast_mpn_inv.apply(lambda x: yel_comp(
-        x['evt']+x['dvt']+x['pvt']+x['lot1']+x['lot2'], x['on_hand']), axis=1)
+        x['evt']+x['dvt']+x['pvt']+x['lot1']+x['lot2'], x['on_hand'], x['lot2_ok']), axis=1)
     comps_forecast_mpn_inv['lot3_ok'] = comps_forecast_mpn_inv.apply(lambda x: yel_comp(
-        x['evt']+x['dvt']+x['pvt']+x['lot1']+x['lot2']+x['lot3'], x['on_hand']), axis=1)
+        x['evt']+x['dvt']+x['pvt']+x['lot1']+x['lot2']+x['lot3'], x['on_hand'], x['lot3_ok']), axis=1)
     comps_forecast_mpn_inv['lot4_ok'] = comps_forecast_mpn_inv.apply(lambda x: yel_comp(
-        x['evt']+x['dvt']+x['pvt']+x['lot1']+x['lot2']+x['lot3']+x['lot4'], x['on_hand']), axis=1)
+        x['evt']+x['dvt']+x['pvt']+x['lot1']+x['lot2']+x['lot3']+x['lot4'], x['on_hand'], x['lot4_ok']), axis=1)
     comps_forecast_mpn_inv = comps_forecast_mpn_inv.sort_values(by=['evt_ok',
                                                                     'dvt_ok',
                                                                     'pvt_ok',
@@ -543,7 +510,6 @@ def main(api_key):
                                                                     'lot3_ok',
                                                                     'lot4_ok'],
                                                                 ascending=True).reset_index(drop=True)
-
 
     # FINAL FORMATTING FOR LEGIBILITY
     cols_to_move = ['parent',
@@ -564,61 +530,6 @@ def main(api_key):
         time.strftime("%Y%m%d-%H%M%S") + '.xlsx'
     comps_forecast_mpn_inv.to_excel(csv, index=False)
 
-# =============================================================================
-#     # In[THIS SECTION BUILDS THE BUY QTY DF]
-#     # WE WANT TO PULL SOURCING DATA FROM DURO FOR QTYS ABOVE AND BELOW OUR
-#     # IDENTIFIED BUY QTY
-#     buyqty = comps_forecast_mpn_inv[['cpn', 'name', 'buy_qty']]
-#     buyqty = buyqty.merge(srcs, 'left', 'cpn')
-#     # THE ORDER RATIO HELPS US IDENTIFY WHICH MOQS ARE NEAREST OUR
-#     # BUY QTY
-#     buyqty['ord_ratio'] = buyqty.apply(
-#         lambda x: x['buy_qty']/x['min_qty'], axis=1)
-#     buyqty = buyqty[buyqty['buy_qty'] != 0]
-#     # ONE PRICE WE WANT IS FOR ORDERS MORE THAN OUR NEED
-#     # MOQ > NEED IS SMALLEST ORDER RATIO GREATER THAN 1
-#     buyqty_high = buyqty[buyqty['ord_ratio'] < 1]
-#     buyqty_high = buyqty_high[['cpn', 'ord_ratio']].groupby(
-#         ['cpn'], as_index=False).agg(max)
-#     # THE OTHER PRICE WE WANT IS FOR ORDERS LESS THAN OUR NEED
-#     # MOQ < NEED IS LARGEST ORDER RATIO LESS THAN 1
-#     buyqty_low = buyqty[buyqty['ord_ratio'] > 1]
-#     buyqty_low = buyqty_low[['cpn', 'ord_ratio']].groupby(
-#         ['cpn'], as_index=False).agg(min)
-#     buys = [buyqty, buyqty_high, buyqty_low]
-#     # CREATE A KEY TO JOIN ON THE buyqty DF AND IDENTIFY WHICH MOQS WE WANT TO KEEP
-#     for df in buys:
-#         df['key'] = ''
-#         df['key'] = df.apply(lambda x: x['cpn'] + str(x['ord_ratio']), axis=1)
-#
-#     # ADDING AN INDICATOR COLUMN TO SORT ON
-#     buyqty_high['high_low'] = 'MOQ>NEED'
-#     buyqty_low['high_low'] = 'NEED>MOQ'
-#
-#     # MERGING IN KEYS FOR LOW AND HIGH
-#     buyqty_high = buyqty_high[['key', 'high_low']]
-#     buyqty_low = buyqty_low[['key', 'high_low']]
-#     buyqty_low = buyqty_low.append(buyqty_high)
-#     buyqty = buyqty.merge(buyqty_low, 'left', 'key')
-#
-#     # REDUCING THE DF TO KEEP ONLY THE MOQS WE WANT
-#     buyqty = buyqty.loc[(buyqty['high_low'].notnull())]
-#     # buyqty = buyqty.sort_values(by=['cpn'], ascending=True)
-#
-#     # CLEANING UP THE DF
-#     buyqtyind = buyqty[['cpn', 'key']].copy()
-#     buyqtyind['sourcing_info'] = 'Yes'
-#     buyqtyind = buyqtyind.drop(columns=['key']).drop_duplicates()
-#     comps_forecast_mpn_inv = comps_forecast_mpn_inv.merge(
-#         buyqtyind, 'left', 'cpn')
-#     comps_forecast_mpn_inv['sourcing_info'] = comps_forecast_mpn_inv['sourcing_info'].fillna(
-#         'No')
-#
-#     hash1 = pd.util.hash_pandas_object(comps_forecast_mpn_inv).sum()
-#     logging.debug("comps_forecast_mpn_inv hash value = "+str(hash1))
-#     logging.debug(hash1)
-# =============================================================================
-
     # In[HERE IS WHERE WE SPLIT THE COMPONENTS BY ELECTRICAL AND MECHANICAL]
     # WE START BY REFERENCING A DURO CATEGORY FILE SAVED LOCALLY
     # THIS FILE WILL NEED UPDATING IF DURO MAKES UPDATES ON OUR BEHALF
@@ -626,7 +537,12 @@ def main(api_key):
     elec = elec[elec['Category'] ==
                 "-- ELECTRICAL --"].drop(columns=['Category']).reset_index(drop=True)
 
-    # PULLING IN PROCUREMENT DECISION FILE AND DROPPING EXISTING PROCURMENT COL
+    # PULLING IN PROCUREMENT DECISION FILE AND DROPPING EXISTING PROCUREMENT COL
+    item_master = pd.read_excel("./data/item_master.xlsx",
+                         sheet_name='CPN Item Master',
+                         header=0)
+    item_master = item_master[['CPN', 'Buyer Org']]
+    item_master = item_master.rename(columns={'CPN': 'cpn', 'Buyer Org': 'proc'})
     proc = pd.read_excel("./data/procurement.xlsx",
                          sheet_name='Full Rack Flattened',
                          header=0)
@@ -634,7 +550,8 @@ def main(api_key):
     proc = proc.rename(columns={'CPN': 'cpn', 'Procurement': 'procurement'})
     comps_forecast_mpn_inv = comps_forecast_mpn_inv.drop(
         ['procurement'], axis=1)
-    comps_forecast_mpn_inv = comps_forecast_mpn_inv.merge(proc, 'left', 'cpn')
+    # comps_forecast_mpn_inv = comps_forecast_mpn_inv.merge(proc, 'left', 'cpn')
+    comps_forecast_mpn_inv = comps_forecast_mpn_inv.merge(item_master, 'left', 'cpn')
 
     comps_forecast_mpn_inv['type'] = comps_forecast_mpn_inv.apply(
         lambda x: '--electrical--' if elec['Value'].str.contains(x['category']).any()else 'mechanical', axis=1)
@@ -644,7 +561,7 @@ def main(api_key):
                     'name',
                     'type',
                     'category',
-                    'procurement']
+                    'proc']
 
     cols = cols_to_move + \
         [col for col in comps_forecast_mpn_inv.columns if col not in cols_to_move]
@@ -656,6 +573,9 @@ def main(api_key):
     old_ctb_get = pd.read_excel(old_notes,
                                 sheet_name='Clear.To.Build',
                                 header=0)
+    old_kpi = pd.read_excel(old_notes,
+                            sheet_name='KPIs',
+                            header=0)
     old_cf_get = pd.read_excel(old_notes,
                                sheet_name='Full.Comp.Forecast',
                                header=0)
@@ -666,11 +586,70 @@ def main(api_key):
     comps_forecast_mpn_inv = comps_forecast_mpn_inv.merge(
         old_notes, 'left', 'cpn')
 
-    # THIS IS THE NEW CLEAR TO BUILD DF
+    comps_forecast_mpn_inv = comps_forecast_mpn_inv.reset_index(drop=False).rename(columns={'index': 'idx',
+                                                                # 'procurement': 'proc',
+                                                                'lead_time': 'lt',
+                                                                'forecast_total': 'lot_tot',
+                                                                'total_qty': 'inv_tot', })
+    cols_to_move = ['idx', 'Notes', 'cpn', 'name', 'proc', 'lot1', 'lot2', 'lot3', 'lot4',
+                    'lot_tot', 'inv_tot', 'buy_qty', 'lot1_ok', 'lot2_ok', 'lot3_ok', 'lot4_ok',
+                    'open_orders', 'on_hand']
+
+    cols = cols_to_move + [col for col in comps_forecast_mpn_inv.columns if col not in cols_to_move]
+    comps_forecast_mpn_inv = comps_forecast_mpn_inv[cols]
+    # THIS IS THE CLEAR TO BUILD DF
     ctb = comps_forecast_mpn_inv.loc[(
-        comps_forecast_mpn_inv['lot4_ok'] == 'No')]
+        comps_forecast_mpn_inv['lot4_ok'] != '3-Ok')]
+
+    # This is the KPI data frame
+    # kpi = comps_forecast_mpn_inv[['lot1_ok', 'lot2_ok', 'lot3_ok', 'lot4_ok']].apply(
+    #     pd.value_counts).reset_index(drop=False)
+    # kpi['date'] = dt.datetime.now()
+    # kpi = kpi.rename(columns={'index':'kpi'})
+    # kpi.columns = kpi.columns.str.replace('_ok','',regex=True)
+    # kpi = kpi.append(old_kpi)
+    # kpi = kpi.fillna(0).sort_values('date', ascending=False).reset_index(drop=True)
+
+    # This is the new KPI data frame
+    kpi_cpn = {
+        "gimlet": "992-0000015",
+        "sidecar": "992-0000014",
+        "psc": "991-0000009",
+        # "mechanical": "992-0000026"
+    }
+    # value = "992-0000015"
+    kpi = old_kpi
+    for key, value in kpi_cpn.items():
+        print(key, '->', value)
+
+        temp = comps_forecast_mpn_inv[comps_forecast_mpn_inv["pnladder"].str.contains(value)]
+        temp = temp[['lot1_ok', 'lot2_ok', 'lot3_ok', 'lot4_ok']].apply(
+            pd.value_counts).reset_index(drop=False)
+        temp['date'] = dt.datetime.now()
+        temp = temp.rename(columns={'index':'kpi'})
+        temp.columns = temp.columns.str.replace('_ok','',regex=True)
+        temp['assembly'] = key
+        temp['cpn'] = value
+        kpi =kpi.append(temp)
+        kpi = kpi.fillna(0).sort_values(by=['date', 'kpi'], ascending=[False, True]).reset_index(drop=True)
+
+    cols_to_move = ['assembly',
+                    'cpn']
+
+    cols = cols_to_move + \
+        [col for col in kpi.columns if col not in cols_to_move]
+    kpi = kpi[cols]
+
     # In[CREATE AND NAME XLS MULTI-WORKSHEET FILE]
     # CREATE AND NAME XLS MULTI-WORKSHEET FILE
+    uploads = './uploads/'
+    csv = uploads + 'ClearToBuild_Analysis.xlsx'
+    writer = pd.ExcelWriter(csv, engine='xlsxwriter')
+
+    ctb_cont = './data/ctb_contents.xlsx'
+    ctb_get_cont = pd.read_excel(ctb_cont,
+                                 sheet_name='Sheet1',
+                                 header=0)
     uploads = './uploads/'
     csv = uploads + 'ClearToBuild_Analysis.xlsx'
     writer = pd.ExcelWriter(csv, engine='xlsxwriter')
@@ -685,6 +664,9 @@ def main(api_key):
 
     # Then the CTB analysis
     ctb.to_excel(writer, sheet_name='Clear.To.Build', index=False)
+
+    # Then the weekly KPI stats
+    kpi.to_excel(writer, sheet_name='KPIs', index=False)
 
     # And the full component forecast
     comps_forecast_mpn_inv.to_excel(
@@ -742,6 +724,7 @@ def main(api_key):
         "FINISH REMOVING ASSEMBLIES AND GROUPING DATA BY COMPONENT PN")
     nd = dt.datetime.now()
     logging.info(nd-st)
+
     return comps_forecast_mpn_inv
 
 
@@ -752,11 +735,11 @@ if __name__ == '__main__':
         opsconfigs = yaml.safe_load(stream)
     logconfigs = opsconfigs['logging_configs']
     loglvl = logconfigs['level']
-    logging.basicConfig(filename=('./gitlogs/compforecast' + time.strftime("%Y-%m-%d") + '.log'),
+    logging.basicConfig(filename=('./gitlogs/ctb' + time.strftime("%Y-%m-%d") + '.log'),
                         level=loglvl,
                         format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
 
-    logging.info("START compforecast.py __main__ HERE")
+    logging.info("START ctb.py __main__ HERE")
 
     desc_string = 'This utility builds the Ops Component Forecast Analsyis.' \
         ' It combines Duro BOM, GDrive Inventory, and GDrive Forecast info to ' \
@@ -787,4 +770,4 @@ if __name__ == '__main__':
             allcreds = yaml.safe_load(crstream)
         cfmp = main(allcreds['oxide_duro']['api_key'])
 
-    logging.info("FINISH compforecast.py __main__ HERE")
+    logging.info("FINISH ctb.py __main__ HERE")

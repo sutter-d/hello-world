@@ -56,8 +56,9 @@ def main(oxfolder='1cifHUNhTLyeuDWtdhhmbJ176sL0O9uON', isodate = True):
     
     service = build('drive', 'v3', credentials=creds, cache_discovery=False)
     # fh = io.BytesIO()
+    print("UPLOADING ALL FILES FROM ./uploads/")
     logging.info("UPLOADING ALL FILES FROM ./uploads/")
-    
+
     #UPLOADING ALL DOCS FROM THE ./uploads/ FOLDER TO GDRIVE OPSAUTO > REPORTS FOLDER
     # if oxfolder:
     #     folder_id = oxfolder
@@ -72,7 +73,9 @@ def main(oxfolder='1cifHUNhTLyeuDWtdhhmbJ176sL0O9uON', isodate = True):
     directory = './uploads/'
     
     for filename in os.listdir(directory):
-        if filename.endswith(".py")==False:
+        if filename.endswith(".DS_Store")==True:
+            print('DS_Store skipped')
+        elif filename.endswith(".py")==False:
             logging.debug(os.path.join(directory, filename))
             if isodate is True:
                 logging.debug(filename.replace('.xlsx', ''))
@@ -87,7 +90,9 @@ def main(oxfolder='1cifHUNhTLyeuDWtdhhmbJ176sL0O9uON', isodate = True):
                                                 supportsAllDrives=True,
                                                 fields='id').execute()
             print('File ID: %s' % file.get('id'))
-    
+            logging.info('File ID: %s' % file.get('id'))
+
+    print("UPLOADING ALL LOGS FROM ./gitlogs/")
     logging.info("UPLOADING ALL LOGS FROM ./gitlogs/")
     #UPLOADING ALL LOGS FROM THE GITLOGS FOLDER TO GDRIVE OPSAUTO > LOGS FOLDER
     folder_id='1BOLxZBfpBt0zPuM1FUt06D60AVTZnxLH'
@@ -105,6 +110,7 @@ def main(oxfolder='1cifHUNhTLyeuDWtdhhmbJ176sL0O9uON', isodate = True):
                                                 supportsAllDrives=True,
                                                 fields='id').execute()
             print('File ID: %s' % file.get('id'))
+            logging.info('File ID: %s' % file.get('id'))
 
 
 if __name__ == '__main__':

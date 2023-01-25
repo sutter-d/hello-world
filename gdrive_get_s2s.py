@@ -171,19 +171,24 @@ if __name__ == '__main__':
             ['1DQJneaNwyosIyFsnJzKhr3y0D4X2gLW_', 'ctb_contents'],  #LATEST CTB SUMMARY FILE FOR FIST PAGE OF XLSX
             ['1bEEtdW9rBK2KI6HRsVyhxnleZ3wkiJVQ', 'ox_eng_inv'],  # GRABBING LATEST ENG INV FROM Ops > OpsAuto > Attachments
             ['1UXyOtpZ9OEL3SmTq-Ak0pUUlVz1Q6mS2', 'mps'],   # GRABBING LATEST MPS FROM Ops > Forecast/Master Schedule
-            ['1PYgmEmpzg5X54wnSUCl6mY_LZpmhZ4VK', 'procurement']  # GRABBING LATEST PROCUREMENT DECISION FROM Ops > OpsAuto
+            ['1PYgmEmpzg5X54wnSUCl6mY_LZpmhZ4VK', 'procurement'],  # GRABBING LATEST PROCUREMENT DECISION FROM Ops > OpsAuto
+            ['1MNrEGRl-cZnbBsOGHCHcgUs_jVPJCHnG', 'item_master'] # GRABBING LATEST ITEM MASTER
             ]
 
     file_id = pd.DataFrame(data=data, columns=['id', 'name'])
-
+    print("pulling static GDrive files")
+    logging.info("pulling static GDrive files")
     for x in range(len(file_id['id'])):
         logging.info(file_id.iloc[x,:])
         get_file(file_id.at[x, 'id'], file_id.at[x, 'name'])
+
 
     # Here we are pulling the meta data for the ops auto > reports folder
     # We need to find the latest version of the comp forecast file to
     # Copy over the notes and comments
 
+    print("pulling dated GDrive files")
+    logging.info("pulling dated GDrive files")
     drive_id = '0AKcpdSVwv34AUk9PVA' #oxide shared drive id - reqd for meta data pull
     flder_id = '1cifHUNhTLyeuDWtdhhmbJ176sL0O9uON' #ops auto > reports folder id
 
@@ -199,7 +204,7 @@ if __name__ == '__main__':
     # We need to find the latest version of the production inventory file to
     # Copy over the notes and comments
 
-    flder_id = '1LIN-_wuwnJWnE0xKhvNbFwk2lBtkHfco' #ops auto > reports folder id
+    flder_id = '1LIN-_wuwnJWnE0xKhvNbFwk2lBtkHfco' #ops auto > attachments folder id
 
     df = get_list(drive_id, flder_id)
     df = df[df['name'].str.startswith(
@@ -208,3 +213,17 @@ if __name__ == '__main__':
     logging.debug("File ID: " + df)
 
     get_file(df, 'ox_prod_inv')
+
+    # Here we are pulling the meta data for the ops auto > attachments folder
+    # We need to find the latest version of the MRP file to
+    # Copy over the notes and comments
+
+    flder_id = '1LIN-_wuwnJWnE0xKhvNbFwk2lBtkHfco' #ops auto > attachments folder id
+
+    df = get_list(drive_id, flder_id)
+    df = df[df['name'].str.startswith(
+        'mrp_export')].reset_index(drop=True)
+    df = df.loc[0, 'id']
+    logging.debug("File ID: " + df)
+
+    get_file(df, 'mrp_export')

@@ -1452,6 +1452,7 @@ def clean_mps(oxmps):
     This function will take the MPS from the Ops > Forecast/Master Schedule
     GDrive and clean and pivot for use in Prod Scheduling as an Order list by
     PN, Qty, and Lot
+    ***NOTE*** SET HEADER TO ROW 4
 
     Parameters
     ----------
@@ -1465,8 +1466,8 @@ def clean_mps(oxmps):
 
     """
     # oxmps = oxmps.iloc[0:9, 2:108]
-    oxmps = oxmps.iloc[0:5, 2:160]
-    oxmps = oxmps.iloc[2:5, :]
+    oxmps = oxmps.iloc[0:9, 2:160]
+    oxmps = oxmps.iloc[2:9, :]
     oxmps = oxmps.drop(columns=['ISO Week']).rename(columns={'Unnamed: 2': 'cpn'})
     oxmps = oxmps.fillna(0)
     oxmps = pd.melt(oxmps, id_vars='cpn')
@@ -1482,7 +1483,7 @@ def clean_mps(oxmps):
             'wk',
             'qty']
     oxmps = oxmps[cols]
-    
+
     oxmps['lot_num'] = ''
     oxmps['lot_num'] = oxmps.apply(
         lambda x: 'lot1' if x['year'] == 2023 else ('lot5' if x['year'] == 2024 else 'dvt'), axis=1)
@@ -1495,9 +1496,53 @@ def clean_mps(oxmps):
     oxmps.loc[(oxmps['year'] == 2024) & (oxmps['wk'] > 13), 'lot_num'] = 'lot6'
     oxmps.loc[(oxmps['year'] == 2024) & (oxmps['wk'] > 26), 'lot_num'] = 'lot7'
     oxmps.loc[(oxmps['year'] == 2024) & (oxmps['wk'] > 39), 'lot_num'] = 'lot8'
-
+    # oxmps.loc[oxmps['qty'].str.startswith('^') == True, 'lot_num'] = 'planning fence'
+    # fnc = oxmps.loc[oxmps['qty'].str.startswith('^') == True].copy()
+    # oxmps = oxmps.loc[oxmps['qty'].str.startswith('^') == False]
     oxmps['lot_ord'] = oxmps[oxmps['lot_num'] != 'planning fence'].groupby(
         ['lot_num']).cumcount()+1
     oxmps['lot_ord'] = oxmps['lot_ord'].fillna(0)
     oxmps = oxmps.reset_index(drop=True)
     return oxmps
+
+# In[]
+
+def oxinv(ox_open_po, ox_on_hand):
+    """
+
+    Parameters
+    ----------
+    ox_open_po - TYPE pandas DataFrame,
+        DESCRIPTION. Open POs tab from benchmark production inventory file. latest version should be captured in /data/ox_proc_inv.xlsx
+    ox_on_hand - TYPE pandas DataFrame,
+        DESCRIPTION. Inventory on Hand tab from benchmark production inventory file. latest version should be captured in /data/ox_proc_inv.xlsx
+
+
+    Returns
+    -------
+    ox_inv : TYPE Pandas DataFrame
+        DESCRIPTION. Grouped and cleaned, tidy INV file for use in ctb and ops reporting
+    """
+    ox_open_po = ox_open_po[['BEI Part', 'Quantity']].dropna()
+    ox_open_po['BEI Part'] = ox_open_po['BEI Part'].map(
+        lambda x: x.replace('OXC', ''))
+    ox_open_po['cpn'] = ox_open_po['BEI Part'].map(lambda x: x[:11])
+    ox_open_po = ox_open_po.groupby(by=['cpn']).agg(sum)
+    ox_open_po = ox_open_po.rename(
+        columns={'Quantity': 'open_orders'})
+    
+    ox_on_hand = ox_on_hand[['BEI Part', 'Description', 'Quantity']]
+    ox_on_hand = ox_on_hand.dropna()
+    ox_on_hand['BEI Part'] = ox_on_hand['BEI Part'].map(
+        lambda x: x.replace('OXC', ''))
+    ox_on_hand['cpn'] = ox_on_hand['BEI Part'].map(lambda x: x[:11])
+    ox_on_hand = ox_on_hand.groupby(by=['cpn']).agg(sum)
+    
+    ox_inv = pd.concat((ox_open_po, ox_on_hand), axis=1)
+    
+    ox_inv = ox_inv.reset_index(drop=False)
+    ox_inv = ox_inv.fillna(0)
+    ox_inv = ox_inv.rename(columns={'Quantity': 'on_hand', 'index': 'cpn'})
+    ox_inv['total_qty'] = ox_inv.apply(
+        lambda x: x['open_orders'] + x['on_hand'], axis=1)
+    return ox_inv
