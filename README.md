@@ -4,10 +4,14 @@ Daniel Sutter
 
 Skills and Certs
 | Network: CCNA, CCENT
+
 | Programming: Python, R, SQL, VBA, HTML, CSS, Java
+
 | Reporting: PowerBI, Spotfire, ServiceNOW
+
 | Supply Chain: LeanSixSigma Black Belt, Apollo RCA
-| Automation: RPA
+
+| Automation: GCP, GitHub Actions, RPA
 
 Education
 | MS – Supply Chain Management, PSU 2017
