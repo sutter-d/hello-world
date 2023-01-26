@@ -3,6 +3,7 @@ Daniel Sutter
 | I work in IT, dabble in beer, and golf
 
 Skills and Certs
+
 | Network: CCNA, CCENT
 
 | Programming: Python, R, SQL, VBA, HTML, CSS, Java
