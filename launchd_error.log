@@ -1417,3 +1417,23 @@ Traceback (most recent call last):
   File "/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/logging/__init__.py", line 1172, in _open
     return open(self.baseFilename, self.mode, encoding=self.encoding)
 FileNotFoundError: [Errno 2] No such file or directory: '/Volumes/GoogleDrive/My Drive/logs/local_daily_2023-01-24.log'
+Traceback (most recent call last):
+  File "/Users/danielsutter/Documents/oxide/scripts/local_daily.py", line 31, in <module>
+    logging.basicConfig(filename=('/Volumes/GoogleDrive/My Drive/logs/local_daily_' + time.strftime("%Y-%m-%d") + '.log'),
+  File "/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/logging/__init__.py", line 1984, in basicConfig
+    h = FileHandler(filename, mode)
+  File "/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/logging/__init__.py", line 1143, in __init__
+    StreamHandler.__init__(self, self._open())
+  File "/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/logging/__init__.py", line 1172, in _open
+    return open(self.baseFilename, self.mode, encoding=self.encoding)
+FileNotFoundError: [Errno 2] No such file or directory: '/Volumes/GoogleDrive/My Drive/logs/local_daily_2023-01-25.log'
+Traceback (most recent call last):
+  File "/Users/danielsutter/Documents/oxide/scripts/local_daily.py", line 31, in <module>
+    logging.basicConfig(filename=('/Volumes/GoogleDrive/My Drive/logs/local_daily_' + time.strftime("%Y-%m-%d") + '.log'),
+  File "/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/logging/__init__.py", line 1984, in basicConfig
+    h = FileHandler(filename, mode)
+  File "/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/logging/__init__.py", line 1143, in __init__
+    StreamHandler.__init__(self, self._open())
+  File "/Users/danielsutter/opt/anaconda3/envs/theasset/lib/python3.8/logging/__init__.py", line 1172, in _open
+    return open(self.baseFilename, self.mode, encoding=self.encoding)
+FileNotFoundError: [Errno 2] No such file or directory: '/Volumes/GoogleDrive/My Drive/logs/local_daily_2023-01-25.log'

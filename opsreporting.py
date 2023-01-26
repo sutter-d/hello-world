@@ -16,14 +16,20 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
 import ds_utils as ds
+# from dash_google_oauth.google_auth import GoogleAuth
+# from dotenv import load_dotenv
+#
+# # Declare app
+#
+# # Trying to initiate oauth
+# load_dotenv()  # take environment variables from .env.
+# app = dash.Dash(__name__)
+# app.config.external_stylesheets = [dbc.themes.ZEPHYR]
+# auth = GoogleAuth(app)
 
-# import gdrive_get_s2s.py as get
-# Declare app
-
+# Without oauth
 app = dash.Dash()
 app.config.external_stylesheets = [dbc.themes.ZEPHYR]
-
-# app = dash.Dash(__name__)
 
 # NAVBAR CONTAINER
 # The nav bar sits at the top of
@@ -177,7 +183,7 @@ app.layout = html.Div(
 
 # Lot Plan tab_content
 # The lot plan tab has both the
-# lot plan an master production
+# lot plan and master production
 # schedule pulled from gdrive
 lot_gdrive = './data/mps.xlsx'
 lot_data = pd.read_excel(lot_gdrive,
@@ -367,7 +373,7 @@ kpi_checklist = dcc.Checklist(
 )
 
 # Each page will have a content container
-# with the nav bar and all of the special
+# with the nav bar and all the special
 # containers for that page
 kpi_content = [
     navbar,

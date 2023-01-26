@@ -1,1 +1,15 @@
 ['idx', 'Notes', 'cpn', 'name', 'proc', 'lot1', 'lot2', 'lot3', 'lot4', 'lot_total', 'lt', 'inv_total', 'buy_qty', 'lot1_ok', 'lot2_ok', 'lot3_ok', 'lot4_ok', 'open_orders', 'on_hand', 'parent', 'category', 'pnladder', 'type', 'quantity', 'ext_qty', 'mpn', 'manf_name', 'evt', 'dvt', 'pvt', 'evt_ok', 'dvt_ok', 'pvt_ok', 'lot5', 'lot6', 'lot7', 'lot8']
+
+{
+  "web": {
+    "client_id": "599739951556-qaqvhnb0fh1tket65celb0f584spu4t0.apps.googleusercontent.com",
+    "project_id": "oxops-gcp-project",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_secret": "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",
+    "redirect_uris": [
+      "http://127.0.0.1:8050"
+    ]
+  }
+}
