@@ -6,11 +6,11 @@ Education
 | MS – Supply Chain Management, PSU 2017
 | BS – Industrial Engineering, UW-Madison 2010 
 
-Current Role - Ops @ Oxide Computer
+Current Role - Process Improvement @ Fifth Third Bank
 
 Skills and Certs
 
-| Supply Chain: Forecasting and Master Scheduling, Materials Management, Quality Management, LeanSixSigma Black Belt, Apollo RCA
+| Supply Chain: Process Improvement, Forecasting and Master Scheduling, Materials Management, Quality Management, LeanSixSigma Black Belt, Apollo RCA
 
 | Network: CCNA, CCENT
 
